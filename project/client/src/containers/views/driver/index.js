@@ -18,7 +18,7 @@ const options = [
   { key: "99", text: "Xe khác", value: "99" },
 ];
 
-class AdminDashboard extends React.Component {
+class Driver extends React.Component {
   constructor(props) {
     super(props);
 
@@ -83,15 +83,15 @@ class AdminDashboard extends React.Component {
                     <Grid.Column>
                       <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
                       <Header as="h4">
-                        Quản trị viên
+                        Xin chào tài xế
                       </Header>
-                      <Header as="h4">Bảng điều phối</Header>
+                      <Header as="h4">Bác tài đang ở đâu?</Header>
                     </Grid.Column>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Điểm đón</label>
+                        <label>Địa điểm</label>
                       </Grid.Column>
                       <Grid.Column>
                         <input
@@ -123,7 +123,7 @@ class AdminDashboard extends React.Component {
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Chọn loại xe</label>
+                        <label>Loại xe bác tài đang chạy</label>
                       </Grid.Column>
                       <Grid.Column>
                         <Select
@@ -138,22 +138,26 @@ class AdminDashboard extends React.Component {
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit">Gọi xe</Button>
+                    <Button type="submit">Gửi thông tin địa điểm</Button>
                   </Grid.Row>
 
                   <Grid.Row style={{ padding: "50px 10px 10px 10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Thông tin tài xế</label>
+                        <label>Thông tin cuốc xe</label>
                       </Grid.Column>
                       <Grid.Column>
                         <TextArea
                           readOnly={true}
-                          value={this.state.driiver}
+                          value={this.state.book}
                           onChange={this.handleChangeCarType}
                         />
                       </Grid.Column>
                     </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Button type="submit">Nhận cuốc xe</Button>
+                    <Button type="submit">Bỏ qua</Button>
                   </Grid.Row>
                 </Grid.Column>
               </Grid>
@@ -165,5 +169,4 @@ class AdminDashboard extends React.Component {
   }
 }
 
-export default AdminDashboard;
-
+export default Driver;

@@ -3,7 +3,7 @@
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const express = require("express");
-const notesRouter = require("./routes/notes");
+const usersRouter = require("./routes/users");
 
 // Loads env variables
 require("dotenv").config();
@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
 });
 
 // makes the app aware of routes in another folder
-app.use("/notes", notesRouter);
+app.use("/users", usersRouter);
 
 // Connect to db
 const db = require("./app/models");

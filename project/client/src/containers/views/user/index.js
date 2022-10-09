@@ -18,7 +18,7 @@ const options = [
   { key: "99", text: "Xe khác", value: "99" },
 ];
 
-class AdminDashboard extends React.Component {
+class User extends React.Component {
   constructor(props) {
     super(props);
 
@@ -26,6 +26,7 @@ class AdminDashboard extends React.Component {
       address: "",
       phoneNumber: "",
       carType: null,
+      driver: ""
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -83,9 +84,9 @@ class AdminDashboard extends React.Component {
                     <Grid.Column>
                       <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
                       <Header as="h4">
-                        Quản trị viên
+                        Chúng tôi rất hân hạnh được phục vụ.
                       </Header>
-                      <Header as="h4">Bảng điều phối</Header>
+                      <Header as="h4">Đặt xe</Header>
                     </Grid.Column>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
@@ -149,7 +150,7 @@ class AdminDashboard extends React.Component {
                       <Grid.Column>
                         <TextArea
                           readOnly={true}
-                          value={this.state.driiver}
+                          value={this.state.driver}
                           onChange={this.handleChangeCarType}
                         />
                       </Grid.Column>
@@ -165,5 +166,4 @@ class AdminDashboard extends React.Component {
   }
 }
 
-export default AdminDashboard;
-
+export default User;

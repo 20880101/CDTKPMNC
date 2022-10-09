@@ -1,16 +1,17 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import Main from "../containers/layouts/main";
-import MainAdmin from "../containers/layouts/mainAdmin";
-
 // views
 import About from "../containers/views/main/about";
 import Home from "../containers/views/main/home";
-import Login from "../containers/views/main/login";
+import Login from "../containers/views/main/login/index";
 
-// admin Views
+// user views
+import User from "../containers/views/user/";
+// driver views
+import Driver from "../containers/views/driver";
 
+// admin views
 import Dashboard from "../containers/views/admin/dashboard";
 import Setting from "../containers/views/admin/setting";
 
@@ -18,13 +19,15 @@ function AppRouters() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/user" element={<User />} />
+        <Route path="/driver" element={<Driver />} />
 
-        <Route path="/admin" exact component={<Dashboard />} />
-        <Route path="/admin/setting" component={<Setting />} />
+        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin/setting" element={<Setting />} />
 
-        <Route path="/home" exact component={<Home />} />
-        <Route path="/about" component={<About />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
       </Routes>
     </BrowserRouter>
   );
