@@ -85,55 +85,38 @@ class Driver extends React.Component {
                       <Header as="h4">
                         Xin chào tài xế
                       </Header>
-                      <Header as="h4">Bác tài đang ở đâu?</Header>
+                      <Header as="h4">Bác tài đang ở đây</Header>
                     </Grid.Column>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Địa điểm</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="address"
-                          type="text"
-                          placeholder="1 Lê Duẩn, Quận 1, Hồ Chí Minh"
-                          value={this.state.address}
-                          onChange={this.handleChangeAddress}
-                        />
+                        <label>Tên bác tài:</label>
+                        <label>{this.state.name}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Số điện thoại</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="phoneNumber"
-                          type="text"
-                          readOnly
-                          value={this.state.phoneNumber}
-                        />
+                        <label>Số điện thoại:</label>
+                        <label>{this.state.phoneNumber}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
-
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Địa điểm: </label>
+                        <label>{this.state.address}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Loại xe bác tài đang chạy</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <Select
-                          style={{ width: "100%" }}
-                          control={Select}
-                          options={options}
-                          placeholder="Chọn loại xe"
-                          value={this.state.carType}
-                          onChange={this.handleChangeCarType}
-                        />
+                        <label>{this.state.carType}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -157,6 +140,7 @@ class Driver extends React.Component {
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Button type="submit">Nhận cuốc xe</Button>
+                    <Button type="submit">Hủy cuốc xe</Button>
                     <Button type="submit">Bỏ qua</Button>
                   </Grid.Row>
                 </Grid.Column>

@@ -2,17 +2,19 @@
 
 const bodyParser = require("body-parser");
 const cors = require("cors");
+
+// Initalizes express server
 const express = require("express");
+const app = express();
+var expressWs = require('express-ws')(app);
+
 const usersRouter = require("./routes/users");
 
 // Loads env variables
 require("dotenv").config();
 
-// Initalizes express server
-const app = express();
-
 var corsOptions = {
-  origin: "http://localhost:8081",
+  origin: "http://localhost:3000",
 };
 
 // specifies what port to run the server on
@@ -25,13 +27,30 @@ app.use(bodyParser.json());
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(function (req, res, next) {
+  req.websocket = '/websocket';
+  return next();
+});
+
 // simple route
-app.get("/", (req, res) => {
-  res.json({ message: "Chào mừng đến với ứng dụng đặt xe." });
+app.get("/", (req, res, next) => {
+  console.log('get route', req.url);
+  res.json({message: 'Wellcom'});
+  res.end();
 });
 
 // makes the app aware of routes in another folder
 app.use("/users", usersRouter);
+
+app.ws('/websocket', function(ws, req) {
+  ws.on('message', function(msg) {
+    console.log(msg);
+    ws.send("Receive message: " + msg);
+    ws.send("end");
+  });
+  console.log('socket', req.websocket);
+});
+
 
 // Connect to db
 const db = require("./app/models");

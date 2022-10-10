@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
 import {
   Grid,
   Button,
@@ -23,10 +25,12 @@ class User extends React.Component {
     super(props);
 
     this.state = {
+      userId: null,
+      name: "Nguyen Thi Thuy Trang",
+      phoneNumber: "123456",
       address: "",
-      phoneNumber: "",
-      carType: null,
-      driver: ""
+      carType: "1",
+      driver: "",
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -36,17 +40,30 @@ class User extends React.Component {
   }
 
   handleSubmit(event) {
+    const url = "ws://localhost:8080/websocket";
+    const connection = new WebSocket(url);
+    connection.onopen = () => {
+      connection.send("Message From Client");
+    };
+    connection.onerror = (error) => {
+      console.log(`WebSocket error: ${error}`);
+    };
+    connection.onmessage = (e) => {
+      console.log(e.data);
+    };
+
     // alert('A name was submitted: ' + this.state.agree);
     // creates entity
-    fetch("https://localhost:8080/user/login", {
+    fetch("http://localhost:8080/users/booking", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         accept: "application/json",
       },
       body: JSON.stringify({
+        userId: this.state.userId,
         address: this.state.address,
-        password: this.state.password,
+        carType: this.state.carType,
       }),
     })
       .then((response) => response.json())
@@ -77,7 +94,7 @@ class User extends React.Component {
                 textAlign="center"
                 style={{ height: "90vh", padding: "10px" }}
                 verticalAlign="middle"
-                pt={3}
+                columns={1}
               >
                 <Grid.Column style={{ maxWidth: 450 }}>
                   <Grid.Row style={{ padding: "10px" }}>
@@ -92,7 +109,24 @@ class User extends React.Component {
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Điểm đón</label>
+                        <label>Xin chào: </label>
+                        <label>{this.state.name}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Số điện thoại: </label>
+                        <label>{this.state.phoneNumber}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Điểm đón:</label>
                       </Grid.Column>
                       <Grid.Column>
                         <input
@@ -105,34 +139,18 @@ class User extends React.Component {
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Số điện thoại</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="phoneNumber"
-                          type="text"
-                          readOnly
-                          value={this.state.phoneNumber}
-                        />
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
 
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Chọn loại xe</label>
+                        <label>Chọn loại xe:</label>
                       </Grid.Column>
                       <Grid.Column>
                         <Select
                           style={{ width: "100%" }}
-                          control={Select}
                           options={options}
                           placeholder="Chọn loại xe"
-                          value={this.state.carType}
+                          selected={this.state.carType}
                           onChange={this.handleChangeCarType}
                         />
                       </Grid.Column>
@@ -148,11 +166,7 @@ class User extends React.Component {
                         <label>Thông tin tài xế</label>
                       </Grid.Column>
                       <Grid.Column>
-                        <TextArea
-                          readOnly={true}
-                          value={this.state.driver}
-                          onChange={this.handleChangeCarType}
-                        />
+                        <TextArea readOnly={true} value={this.state.driver} />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>

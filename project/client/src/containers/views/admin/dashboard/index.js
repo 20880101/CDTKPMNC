@@ -91,31 +91,24 @@ class AdminDashboard extends React.Component {
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Điểm đón</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="address"
-                          type="text"
-                          placeholder="1 Lê Duẩn, Quận 1, Hồ Chí Minh"
-                          value={this.state.address}
-                          onChange={this.handleChangeAddress}
-                        />
+                        <label>Tên khách hàng: </label>
+                        <label>{this.state.name}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Số điện thoại</label>
+                        <label>Số điện thoại: </label>
+                        <label>{this.state.phoneNumber}</label>
                       </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="phoneNumber"
-                          type="text"
-                          readOnly
-                          value={this.state.phoneNumber}
-                        />
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Điểm đón: </label>
+                        <label>{this.state.address}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -123,22 +116,13 @@ class AdminDashboard extends React.Component {
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Chọn loại xe</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <Select
-                          style={{ width: "100%" }}
-                          control={Select}
-                          options={options}
-                          placeholder="Chọn loại xe"
-                          value={this.state.carType}
-                          onChange={this.handleChangeCarType}
-                        />
+                        <label>Loại xe</label>
+                        <label>{this.state.carType}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit">Gọi xe</Button>
+                    <Button type="submit">Điều phối</Button>
                   </Grid.Row>
 
                   <Grid.Row style={{ padding: "50px 10px 10px 10px" }}>

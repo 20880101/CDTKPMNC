@@ -2,6 +2,7 @@ const router = require('express').Router()
 const axios = require('axios')
 // define the default route that fetches all of our notes
 router.get('/', async function (req, res) {
+    console.log('get route', req.url);
     // data the conserves our API quota for development
     const usersData = [
         {
@@ -36,6 +37,19 @@ router.post('/add', async function (req, res) {
         // add api call
         res.json({
             message: 'Note added'
+        })
+    } catch (e) {
+        console.log(e)
+        res.status(500).send("Error.")
+    }
+})
+router.post('/booking', async function (req, res) {
+    // extract booking text from request body
+    console.log(req.body)
+    try {
+        // add api call
+        res.json({
+            message: 'Booking added'
         })
     } catch (e) {
         console.log(e)
