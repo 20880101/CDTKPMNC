@@ -27,16 +27,18 @@ class AdminDashboard extends React.Component {
     super(props);
 
     this.state = {
-      bookingId: "",
-      userId: "99999",
+      userId: "101",
+      bookingId: "",      
+      clientId: "1",
+      clientName: "",
       address: "",
       phoneNumber: "",
-      carType: null,
+      carType: "1",
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleChangeAddress = this.handleChangeAddress.bind(this);
-    this.handleChangeCarType = this.handleChangeCarType.bind(this);
+    // this.handleChangeAddress = this.handleChangeAddress.bind(this);
+    // this.handleChangeCarType = this.handleChangeCarType.bind(this);
     this.wrapper = React.createRef();
   }
 
@@ -44,34 +46,55 @@ class AdminDashboard extends React.Component {
   componentDidMount() {
     var ref = this;
     connection.onopen = () => {
-      connection.send(`{"messageType": "REGISTER", "application":"ADMIN", "userId":${this.state.userId}}`);
+      connection.send(
+        `{"messageType": "REGISTER", "application":"ADMIN", "userId":${this.state.userId}}`
+      );
     };
-    
+
     connection.onerror = (error) => {
       console.log(`WebSocket error: ${error}`);
     };
-    
+
     connection.onmessage = (e) => {
       console.log(e.data);
       var parsedMessage = JSON.parse(e.data);
       // {"messageType":"BOOKING","application":"CLIENT","userId":"1","booking":"634ae832bb525b32bc5af14f","address":"1 Lê Duẩn, Quận 1, Hồ Chí Minh"}
       if (parsedMessage.messageType === "BOOKING") {
         console.log(parsedMessage.messageType);
-        this.setState({clientId: parsedMessage.userId});
-        this.setState({bookingId: parsedMessage.booking});
-        this.setState({address: parsedMessage.address});
-        this.setState({carType: parsedMessage.carType});
+        this.setState({ clientId: parsedMessage.userId });
+        // this.setState({ clientName: parsedMessage.clientName });
+        this.setState({ bookingId: parsedMessage.booking });
+        this.setState({ address: parsedMessage.address });
+        this.setState({ carType: parsedMessage.carType });
+        this.setState({ phoneNumber: parsedMessage.phoneNumber });
+
+        console.log(parsedMessage.userId);
+        fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
+              method: "GET",
+              headers: {
+                "content-type": "application/json",
+                accept: "application/json",
+              }
+            })
+            .then((response) => response.json())
+            .then((response) => {
+              console.log(response);
+              this.setState({ clientName: response.name });
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        
       }
     };
 
     // Submit location
     if (timerId === null) {
-      timerId = setInterval(function() {
+      timerId = setInterval(function () {
         // console.log('interval send location');
         // connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
       }, 2000);
     }
-
   }
 
   componentWillUnmount() {
@@ -81,29 +104,42 @@ class AdminDashboard extends React.Component {
   }
 
   handleSubmit(event) {
-    // alert('A name was submitted: ' + this.state.agree);
-    // creates entity
-    fetch("https://localhost:8080/user/login", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify({
-        address: this.state.address,
-        password: this.state.password,
-      }),
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        
+
+    // // alert('A name was submitted: ' + this.state.agree);
+    // // creates entity
+    // fetch("https://localhost:8080/user/login", {
+    //   method: "POST",
+    //   headers: {
+    //     "content-type": "application/json",
+    //     accept: "application/json",
+    //   },
+    //   body: JSON.stringify({
+    //     address: this.state.address,
+    //     password: this.state.password,
+    //   }),
+    // })
+    //   .then((response) => response.json())
+    //   .then((response) => {
+    //     console.log(response);
+    //   })
+    //   .catch((err) => {
+    //     console.log(err);
+    //   });
   }
 
+  handleChangeClientName(event){
+    console.log(event.target.value );
+    this.setState({ clientName: event.target.value });
+  } 
+  
+  handleChangePhoneNumber(event) {
+    console.log(event.target.value );
+    this.setState({ phoneNumber: event.target.value });
+  }
+  
   handleChangeAddress(event) {
+    console.log(event.target.value );
     this.setState({ address: event.target.value });
   }
 
@@ -128,9 +164,7 @@ class AdminDashboard extends React.Component {
                   <Grid.Row style={{ padding: "10px" }}>
                     <Grid.Column>
                       <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
-                      <Header as="h4">
-                        Quản trị viên
-                      </Header>
+                      <Header as="h4">Quản trị viên</Header>
                       <Header as="h4">Bảng điều phối</Header>
                     </Grid.Column>
                   </Grid.Row>
@@ -154,7 +188,15 @@ class AdminDashboard extends React.Component {
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Tên khách hàng: </label>
-                        <label>{this.state.name}</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                      <input
+                          name="clientName"
+                          type="text"
+                          placeholder="Input client name..."
+                          value={this.state.clientName} 
+                          onChange={(event)=>this.handleChangeClientName(event)}
+                        />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -162,7 +204,15 @@ class AdminDashboard extends React.Component {
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Số điện thoại: </label>
-                        <label>{this.state.phoneNumber}</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                      <input
+                          name="phoneNumber"
+                          type="text"
+                          placeholder="Input address..."
+                          value={this.state.phoneNumber} 
+                          onChange={(event)=>this.handleChangePhoneNumber(event)}
+                        />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -170,7 +220,15 @@ class AdminDashboard extends React.Component {
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Điểm đón: </label>
-                        <label>{this.state.address}</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                        <input
+                          name="address"
+                          type="text"
+                          placeholder="Input address..."
+                          value={this.state.address} 
+                          onChange={(event)=>this.handleChangeAddress(event)}
+                        />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -179,7 +237,15 @@ class AdminDashboard extends React.Component {
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Loại xe</label>
-                        <label>{this.state.carType}</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                        <Select
+                          style={{ width: "100%" }}
+                          options={options}
+                          placeholder="Chọn loại xe"
+                          value={this.state.carType}
+                          onChange={(event)=>this.handleChangeCarType(event)}
+                        />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
@@ -212,4 +278,3 @@ class AdminDashboard extends React.Component {
 }
 
 export default AdminDashboard;
-

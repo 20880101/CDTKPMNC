@@ -69,6 +69,7 @@ class User extends React.Component {
       body: JSON.stringify({
         userId: this.state.userId,
         address: this.state.address,
+        phoneNumber: this.state.phoneNumber,
         lng: 10.123,
         lat: 1000.123,
         carType: this.state.carType,
@@ -83,7 +84,9 @@ class User extends React.Component {
           "application": "CLIENT", 
           "userId": "${this.state.userId}", 
           "booking": "${response._id}",
-          "address": "${this.state.address}"
+          "address": "${this.state.address}",
+          "phoneNumber": "${this.state.phoneNumber}",
+          "carType": "${this.state.carType}"
         }`);
       })
       .catch((err) => {
@@ -96,8 +99,8 @@ class User extends React.Component {
   }
 
   handleChangeCarType(event) {
-    console.log(event.target.value);
-    this.setState({ carType: event.target.value });
+    console.log(event.target.selected);
+    this.setState({ carType: event.target.key });
   }
 
   render() {
@@ -167,7 +170,7 @@ class User extends React.Component {
                           options={options}
                           placeholder="Chọn loại xe"
                           value={this.state.carType}
-                          onChange={this.handleChangeCarType}
+                          onChange={(event)=>this.handleChangeCarType(event)}
                         />
                       </Grid.Column>
                     </Form.Field>

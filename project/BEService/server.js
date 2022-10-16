@@ -19,16 +19,10 @@ const PORT = process.env.PORT || 8080;
 // Adds json parsing middleware to incoming requests
 app.use(express.json());
 
-var corsOptionsClient = {
-  origin: "http://localhost:5000",
+var corsOptions = {
+  origin: ["http://localhost:5000", "http://localhost:5001", "http://localhost:4000"],
 };
-var corsOptionsDriver = {
-  origin: "http://localhost:5001",
-};
-var corsOptionsAdmin = {
-  origin: "http://localhost:4000",
-};
-app.use(cors(corsOptionsClient, corsOptionsDriver, corsOptionsAdmin));
+app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 // parse requests of content-type - application/x-www-form-urlencoded
@@ -64,7 +58,7 @@ app.ws('/websocket', function(ws, req) {
   // Reveive location from driver
   ws.on('message', function(msg, request) {
     var parsedMessage = JSON.parse(msg);
-    console.log("Receive message: " + JSON.stringify(parsedMessage));
+    console.log("Receive message:" + JSON.stringify(parsedMessage));
     if (parsedMessage.messageType === 'REGISTER') {
       processRegisterMessage(parsedMessage, ws);
 

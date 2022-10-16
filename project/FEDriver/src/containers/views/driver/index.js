@@ -29,8 +29,8 @@ class Driver extends React.Component {
     super(props);
 
     this.state = {
-      userId: "99",
-      name: "Nguyen Van A",
+      userId: "11",
+      name: "Tài xế 1",
       address: "Tran Hung Dao, Quan 1, Ho Chi Minh",
       lng: 10,
       lat: 10,
