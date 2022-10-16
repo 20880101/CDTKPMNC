@@ -36,6 +36,7 @@ class Driver extends React.Component {
       lat: 10,
       phoneNumber: "003551234",
       carType: "1",
+      bookingDetail: ""
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -55,6 +56,38 @@ class Driver extends React.Component {
     
     connection.onmessage = (e) => {
       console.log(e.data);
+      // {
+        // "messageType": "BOOKING_ALERT", 
+        // "application": "ADMIN", 
+        // "clientId": "1", 
+        // "clientName": "Nguyen Thi Thuy Trang 1",
+        // "booking": "634be924346e044c6b1e4008",
+        // "address": "1 Lê Duẩn, Quận 1, Hồ Chí Minh",
+        // "phoneNumber": "123456"
+        // }
+        console.log(e.data);
+        var parsedMessage = JSON.parse(e.data);
+        if (parsedMessage.messageType === "BOOKING_ALERT" && parsedMessage.application === "ADMIN") {
+          this.setState({ bookingDetail: `Mã cuốc xe: ${parsedMessage.booking} \n Địa chỉ đón: ${parsedMessage.address} \n Tên khách hàng: ${parsedMessage.clientName} \n Số điện thoại: ${parsedMessage.phoneNumber}` });
+  
+          console.log(parsedMessage.userId);
+          fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              accept: "application/json",
+            }
+          })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+            this.setState({ clientName: response.name });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+          
+        }
     };
 
     // Submit location
@@ -157,8 +190,7 @@ class Driver extends React.Component {
                       <Grid.Column>
                         <TextArea
                           readOnly={true}
-                          value={this.state.book}
-                          onChange={this.handleChangeCarType}
+                          value={this.state.bookingDetail}
                         />
                       </Grid.Column>
                     </Form.Field>

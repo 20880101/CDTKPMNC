@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 8080;
 app.use(express.json());
 
 var corsOptions = {
-  origin: ["http://localhost:5000", "http://localhost:5001", "http://localhost:4000"],
+  origin: "*",
 };
 app.use(cors(corsOptions));
 
@@ -68,6 +68,13 @@ app.ws('/websocket', function(ws, req) {
         ADMINS.forEach(admin => {
           console.log('Forward message to admin dashboard')
           admin.send(msg, admin);
+        })
+      }
+    } else if (parsedMessage.messageType === 'BOOKING_ALERT') {
+      if (DRIVERS?.length > 0) {
+        DRIVERS.forEach(driver => {
+          console.log('Forward message to admin drivers ')
+          driver.send(msg, driver);
         })
       }
     }

@@ -68,6 +68,30 @@ router.post('/booking', function (req, res) {
     }
 })
 
+router.post('/booking-status', function (req, res) {
+    // extract booking text from request body
+    console.log(req.body)
+    try {
+        var booking = {...req.body};
+        booking.finished = false;
+        MongoClient.connect(url, function(err, db) {
+            if (err) throw err;
+            var dbo = db.db("datxe_db");
+            dbo.collection("bookings").updateOne(booking, function(err, out) {
+                if (err) throw err;
+                console.log("1 document updated ");
+                db.close();
+                console.log(out);
+                res.json({...booking});
+            });
+        });
+        
+    } catch (e) {
+        console.log(e)
+        res.status(500).send("Error.")
+    }
+})
+
 // router.post('/delete', async function (req, res) {
 //     // extract the note id to delete from request body
 //     const { noteId } = req.body

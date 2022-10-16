@@ -104,10 +104,47 @@ class AdminDashboard extends React.Component {
   }
 
   handleSubmit(event) {
-        
+      // update booking status
+      // fetch("http://localhost:8080/users/booking-status", {
+      //   method: "POST",
+      //   headers: {
+      //     "content-type": "application/json",
+      //     accept: "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     _id: this.state.bookingId,
+      //     finish: "LOCKED",
+      //   }),
+      // })
+      // .then((response) => response.json())
+      // .then((response) => {
+      //   this.setState({finished: true});
+      //   console.log(`got response -> send message ${JSON.stringify(response)}`);
+      //   connection.send(`{
+      //     "messageType": "BOOKING_ALERT", 
+      //     "application": "ADMIN", 
+      //     "clientId": "${this.state.clientId}", 
+      //     "userName": "${this.state.clientName}"
+      //     "booking": "${this.state.bookingId}",
+      //     "address": "${this.state.address}",
+      //     "phoneNumber": "${this.state.phoneNumber}"
+      //     }`);
+      //   })
+      //   .catch((err) => {
+      //     console.log(err);
+      //   })
+    
+      connection.send(`{
+        "messageType": "BOOKING_ALERT", 
+        "application": "ADMIN", 
+        "clientId": "${this.state.clientId}", 
+        "clientName": "${this.state.clientName}",
+        "booking": "${this.state.bookingId}",
+        "address": "${this.state.address}",
+        "phoneNumber": "${this.state.phoneNumber}"
+        }`);
 
-    // // alert('A name was submitted: ' + this.state.agree);
-    // // creates entity
+    // // send message to drivers
     // fetch("https://localhost:8080/user/login", {
     //   method: "POST",
     //   headers: {
