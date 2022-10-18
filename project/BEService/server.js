@@ -77,6 +77,23 @@ app.ws('/websocket', function(ws, req) {
           driver.send(msg, driver);
         })
       }
+    } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
+      // {
+      //   "messageType": "BOOKING_ACCEPT", 
+      //   "application": "DRIVER", 
+      //   "clientId": "${this.state.clientId}", 
+      //   "bookingId": "${this.state.bookingId}",
+      //   "driverId": "${this.state.userId}",
+      //   "driverName": "${this.state.name}",
+      //   "driverPhoneNumber": "${this.state.phoneNumber}"
+      //   }
+      if (ADMINS.length > 0) {
+        // let id = "ADMIN" + "-" + parsedMessage.clientId;
+        ADMINS.forEach(admin => {
+          console.log('Forward message to admin dashboard')
+          admin.send(msg, admin);
+        })
+      }
     }
   });
 

@@ -36,7 +36,13 @@ class Driver extends React.Component {
       lat: 10,
       phoneNumber: "003551234",
       carType: "1",
-      bookingDetail: ""
+      bookingDetail: "",
+      bookingId: "",
+      clientId: "",
+      clientName: "",
+      clientAddress: "",
+      clientPhoneNumber: "",
+      isBusy: false
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -55,7 +61,6 @@ class Driver extends React.Component {
     };
     
     connection.onmessage = (e) => {
-      console.log(e.data);
       // {
         // "messageType": "BOOKING_ALERT", 
         // "application": "ADMIN", 
@@ -68,10 +73,14 @@ class Driver extends React.Component {
         console.log(e.data);
         var parsedMessage = JSON.parse(e.data);
         if (parsedMessage.messageType === "BOOKING_ALERT" && parsedMessage.application === "ADMIN") {
-          this.setState({ bookingDetail: `Mã cuốc xe: ${parsedMessage.booking} \n Địa chỉ đón: ${parsedMessage.address} \n Tên khách hàng: ${parsedMessage.clientName} \n Số điện thoại: ${parsedMessage.phoneNumber}` });
-  
-          console.log(parsedMessage.userId);
-          fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
+          this.setState({ bookingId: parsedMessage.bookingId});
+          this.setState({ clientId: parsedMessage.clientId});
+          // this.setState({ clientName: parsedMessage.clientName});
+          this.setState({ clientPhoneNumber: parsedMessage.phoneNumber});
+          this.setState({ clientAddress: parsedMessage.address });
+          this.setState({ isBusy: true});
+          console.log(parsedMessage.clientId);
+          fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.clientId}`, {
             method: "GET",
             headers: {
               "content-type": "application/json",
@@ -107,7 +116,15 @@ class Driver extends React.Component {
   }
 
   handleSubmit(event) {
-    
+    connection.send(`{
+      "messageType": "BOOKING_ACCEPT", 
+      "application": "DRIVER", 
+      "clientId": "${this.state.clientId}", 
+      "bookingId": "${this.state.bookingId}",
+      "driverId": "${this.state.userId}",
+      "driverName": "${this.state.name}",
+      "driverPhoneNumber": "${this.state.phoneNumber}"
+      }`);
   }
 
       // fetch("https://localhost:8080/user/location", {
@@ -146,9 +163,9 @@ class Driver extends React.Component {
                     <Grid.Column>
                       <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
                       <Header as="h4">Xin chào tài xế</Header>
-                      <Header as="h4">Bác tài đang ở đây</Header>
                     </Grid.Column>
                   </Grid.Row>
+                  <div class="ui segment">
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
@@ -181,23 +198,43 @@ class Driver extends React.Component {
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
-
+                  </div>
+                  <div class="ui segment">
                   <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Thông tin cuốc xe</label>
                       </Grid.Column>
-                      <Grid.Column>
-                        <TextArea
-                          readOnly={true}
-                          value={this.state.bookingDetail}
-                        />
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Tên hành khách: </label>
+                        <label>{this.state.clientName}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
+                  <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Số điện thoại khách hàng: </label>
+                        <label>{this.state.clientPhoneNumber}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Địa điểm đón: </label>
+                        <label>{this.state.clientAddress}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  </div>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit">Nhận cuốc xe</Button>
-                    <Button type="submit">Hủy cuốc xe</Button>
+                    <Button type="submit" primary>Nhận cuốc xe</Button>
+                    <Button type="submit" secondary>Hủy cuốc xe</Button>
                     <Button type="submit">Bỏ qua</Button>
                   </Grid.Row>
                 </Grid.Column>

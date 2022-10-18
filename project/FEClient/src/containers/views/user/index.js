@@ -122,9 +122,9 @@ class User extends React.Component {
                       <Header as="h4">
                         Chúng tôi rất hân hạnh được phục vụ.
                       </Header>
-                      <Header as="h4">Đặt xe</Header>
                     </Grid.Column>
                   </Grid.Row>
+                  <div class="ui segment">
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
@@ -175,20 +175,36 @@ class User extends React.Component {
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
+                  </div>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit">Gọi xe</Button>
+                    <Button type="submit" primary>Gọi xe</Button>
+                    <Button type="submit" secondary>Hủy gọi</Button>
                   </Grid.Row>
-
-                  <Grid.Row style={{ padding: "50px 10px 10px 10px" }}>
+                  <div class="ui segment">
+                  <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Thông tin tài xế</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <TextArea readOnly={true} value={this.state.driver} />
+                        <label>Tên bác tài: </label>
+                        <label>{this.state.driverName}</label>
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Số điện thoại: </label>
+                        <label>{this.state.driverName}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="center">
+                        <label>Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  </div>
                 </Grid.Column>
               </Grid>
             </Form>

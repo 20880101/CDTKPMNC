@@ -7,6 +7,8 @@ import {
   Select,
   Header,
   Container,
+  Table,
+  Label
 } from "semantic-ui-react";
 
 const options = [
@@ -34,6 +36,7 @@ class AdminDashboard extends React.Component {
       address: "",
       phoneNumber: "",
       carType: "1",
+      drivers: []
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -61,30 +64,9 @@ class AdminDashboard extends React.Component {
       // {"messageType":"BOOKING","application":"CLIENT","userId":"1","booking":"634ae832bb525b32bc5af14f","address":"1 Lê Duẩn, Quận 1, Hồ Chí Minh"}
       if (parsedMessage.messageType === "BOOKING") {
         console.log(parsedMessage.messageType);
-        this.setState({ clientId: parsedMessage.userId });
-        // this.setState({ clientName: parsedMessage.clientName });
-        this.setState({ bookingId: parsedMessage.booking });
-        this.setState({ address: parsedMessage.address });
-        this.setState({ carType: parsedMessage.carType });
-        this.setState({ phoneNumber: parsedMessage.phoneNumber });
-
-        console.log(parsedMessage.userId);
-        fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
-              method: "GET",
-              headers: {
-                "content-type": "application/json",
-                accept: "application/json",
-              }
-            })
-            .then((response) => response.json())
-            .then((response) => {
-              console.log(response);
-              this.setState({ clientName: response.name });
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        
+        this.handleBookingMessage(parsedMessage);
+      } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
+        this.handleBookingAccept(parsedMessage);
       }
     };
 
@@ -95,6 +77,50 @@ class AdminDashboard extends React.Component {
         // connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
       }, 2000);
     }
+  }
+
+  handleBookingMessage(parsedMessage) {
+    this.setState({ clientId: parsedMessage.userId });
+    this.setState({ bookingId: parsedMessage.booking });
+    this.setState({ address: parsedMessage.address });
+    this.setState({ carType: parsedMessage.carType });
+    this.setState({ phoneNumber: parsedMessage.phoneNumber });
+
+    console.log(parsedMessage.userId);
+    fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          }
+        })
+        .then((response) => response.json())
+        .then((response) => {
+          console.log(response);
+          this.setState({ clientName: response.name });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+  }
+
+  handleBookingAccept(parsedMessage) {
+      // {
+      //   "messageType": "BOOKING_ACCEPT", 
+      //   "application": "DRIVER", 
+      //   "clientId": "${this.state.clientId}", 
+      //   "bookingId": "${this.state.bookingId}",
+      //   "driverId": "${this.state.userId}",
+      //   "driverName": "${this.state.name}",
+      //   "driverPhoneNumber": "${this.state.phoneNumber}"
+      //   }
+      let driver = {
+        "bookingId": parsedMessage.bookingId,
+        "driverId" : parsedMessage.driverId,
+        "driverName" : parsedMessage.driverName,
+        "driverPhoneNumber" : parsedMessage.driverPhoneNumber
+      }
+      this.state.drivers[parsedMessage.driverId] = driver;
   }
 
   componentWillUnmount() {
@@ -139,7 +165,7 @@ class AdminDashboard extends React.Component {
         "application": "ADMIN", 
         "clientId": "${this.state.clientId}", 
         "clientName": "${this.state.clientName}",
-        "booking": "${this.state.bookingId}",
+        "bookingId": "${this.state.bookingId}",
         "address": "${this.state.address}",
         "phoneNumber": "${this.state.phoneNumber}"
         }`);
@@ -190,22 +216,31 @@ class AdminDashboard extends React.Component {
       <>
         <div ref={this.wrapper}>
           <Container>
+          <Grid
+                textAlign="center"
+                style={{ padding: "10px" }}
+                verticalAlign="middle"
+                pt={3}
+              >
+                <Grid.Column>
+                  <Grid.Row>
+                    <Grid.Column>
+                      <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
+                      <Header as="h4">Quản trị viên</Header>
+                    </Grid.Column>
+                  </Grid.Row>
+                </Grid.Column>
+            </Grid>
             <Form onSubmit={this.handleSubmit}>
               <Grid
                 textAlign="center"
                 style={{ height: "90vh", padding: "10px" }}
-                verticalAlign="middle"
+                verticalAlign="top"
+                align="top"
                 pt={3}
               >
-                <Grid.Column style={{ maxWidth: 450 }}>
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Grid.Column>
-                      <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
-                      <Header as="h4">Quản trị viên</Header>
-                      <Header as="h4">Bảng điều phối</Header>
-                    </Grid.Column>
-                  </Grid.Row>
-                  <Grid.Row style={{ padding: "10px" }}>
+                <Grid.Column style={{ maxWidth: 550, minWidth:550 }}>
+                  <Grid.Row style={{ padding: "10px" }} stretched>
                     <Form.Field>
                       <Grid.Column align="left">
                         <label>Booking id: </label>
@@ -287,23 +322,92 @@ class AdminDashboard extends React.Component {
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit">Điều phối</Button>
+                    <Button type="submit" primary>Điều phối</Button>
                   </Grid.Row>
 
                   <Grid.Row style={{ padding: "50px 10px 10px 10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Thông tin tài xế</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <TextArea
-                          readOnly={true}
-                          value={this.state.driiver}
-                          onChange={this.handleChangeCarType}
-                        />
-                      </Grid.Column>
-                    </Form.Field>
+                  <label>Danh sách tài xế chấp nhận cuốc xe</label>
+                    <Table celled>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.HeaderCell>STT</Table.HeaderCell>
+                          <Table.HeaderCell>Số điện thoại</Table.HeaderCell>
+                          <Table.HeaderCell>Tên tài xế</Table.HeaderCell>
+                          <Table.HeaderCell>Biển số xe</Table.HeaderCell>
+                          <Table.HeaderCell style={{textAlign: "center" }}><i class="question circle outline icon" title="Gửi thông tin tài xế cho khách hàng"></i></Table.HeaderCell>
+                        </Table.Row>
+                      </Table.Header>
+
+                      <Table.Body>
+                        {this.state.drivers.forEach(driver => {
+                          <Table.Row>
+                          <Table.Cell>
+                            <Label ribbon>1</Label>
+                          </Table.Cell>
+                          <Table.Cell>{driver.driverPhoneNumber}</Table.Cell>
+                          <Table.Cell>{driver.driverName}</Table.Cell>
+                          <Table.Cell>Cell</Table.Cell>
+                          <Table.Cell style={{textAlign: "center" }}>
+                            <Button className="action-btn" onClick={() => console.log(driver.driverId)} circular icon='bullhorn' /></Table.Cell>
+                        </Table.Row>
+                        })}
+                      </Table.Body>
+                    </Table>
                   </Grid.Row>
+                </Grid.Column>
+                <Grid.Column style={{ maxWidth: 550, minWidth:550, textAlign: "left" }}>
+                  <Grid.Row style={{ padding: "10px"}}>
+                    <label>Danh sách 5 điểm đón nhiều nhất</label>
+                    <Table celled>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.HeaderCell>STT</Table.HeaderCell>
+                          <Table.HeaderCell>Địa điểm đón</Table.HeaderCell>
+                          <Table.HeaderCell style={{textAlign: "center" }}><i class="question circle outline icon" title="Điền thông tin vào biểu mẫu"></i></Table.HeaderCell>
+                        </Table.Row>
+                      </Table.Header>
+
+                      <Table.Body>
+                        <Table.Row>
+                          <Table.Cell>
+                            <Label ribbon>1</Label>
+                          </Table.Cell>
+                          <Table.Cell>Cell</Table.Cell>
+                          <Table.Cell style={{textAlign: "center" }}><Button className="action-btn" onClick={() => console.log("data._id")} circular icon='edit' /></Table.Cell>
+                        </Table.Row>
+                        <Table.Row>
+                          <Table.Cell>
+                            <Label ribbon>1</Label>
+                          </Table.Cell>
+                          <Table.Cell>Cell</Table.Cell>
+                          <Table.Cell style={{textAlign: "center" }}><Button className="action-btn" onClick={() => console.log("data._id")} circular icon='edit' /></Table.Cell>
+                        </Table.Row>
+                      </Table.Body>
+                    </Table>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <label>Danh sách 5 cuốc xe gần nhất</label>
+                    <Table celled>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.HeaderCell>STT</Table.HeaderCell>
+                          <Table.HeaderCell>Địa điểm đón</Table.HeaderCell>
+                          <Table.HeaderCell style={{textAlign: "center" }}><i class="question circle outline icon" title="Điền thông tin vào biểu mẫu"></i></Table.HeaderCell>
+                        </Table.Row>
+                      </Table.Header>
+
+                      <Table.Body>
+                        <Table.Row>
+                          <Table.Cell>
+                            <Label ribbon>1</Label>
+                          </Table.Cell>
+                          <Table.Cell>Cell</Table.Cell>
+                          <Table.Cell style={{textAlign: "center" }}><Button className="action-btn" onClick={() => console.log("data._id")} circular icon='edit' /></Table.Cell>
+                        </Table.Row>
+                      </Table.Body>
+                    </Table>
+                  </Grid.Row>
+
                 </Grid.Column>
               </Grid>
             </Form>
