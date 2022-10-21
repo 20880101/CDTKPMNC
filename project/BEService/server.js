@@ -90,10 +90,21 @@ app.ws('/websocket', function(ws, req) {
       if (ADMINS.length > 0) {
         // let id = "ADMIN" + "-" + parsedMessage.clientId;
         ADMINS.forEach(admin => {
-          console.log('Forward message to admin dashboard')
+          console.log('Forward accept message from driver to admin dashboard')
           admin.send(msg, admin);
         })
       }
+    } else if (parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT") {
+      console.log("Admin connect request send message to client and driver");
+      if (DRIVERS.length > 0) {
+         let id = "DRIVER" + "-" + parsedMessage.driverId;
+         DRIVERS[id].send(msg, DRIVERS[id]);
+       }
+       if (CLIENTS.length > 0) {
+         let id = "CLIENT" + "-" + parsedMessage.clientId;
+         CLIENTS[id].send(msg, CLIENTS[id]);
+         // TODO Store booking with client and driver
+       }
     }
   });
 
@@ -104,7 +115,7 @@ app.ws('/websocket', function(ws, req) {
 
 function processRegisterMessage (parsedMessage, ws) {
       id = parsedMessage.application + "-" + parsedMessage.userId;
-      console.log(id);
+      console.log(id);  
       if (parsedMessage.application === 'ADMIN') {
         if (ADMINS[id] === null || ADMINS[id] === undefined) {
           ADMINS[id] = ws;

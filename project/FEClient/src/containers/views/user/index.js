@@ -34,7 +34,9 @@ class User extends React.Component {
       phoneNumber: "123456",
       address: "1 Lê Duẩn, Quận 1, Hồ Chí Minh",
       carType: "1",
-      driver: "",
+      driverName: null,
+      driverPhoneNumber: null,
+      hasDriver: false,
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -45,20 +47,28 @@ class User extends React.Component {
 
   componentDidMount() {
     connection.onopen = () => {
-      connection.send(`{"messageType": "REGISTER", "application":"CLIENT", "userId":${this.state.userId}}`);
+      connection.send(
+        `{"messageType": "REGISTER", "application":"CLIENT", "userId":${this.state.userId}}`
+      );
     };
-    
+
     connection.onerror = (error) => {
       console.log(`WebSocket error: ${error}`);
     };
-    
+
     connection.onmessage = (e) => {
       console.log(e.data);
+      var parsedMessage = JSON.parse(e.data);
+      if (parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT") {
+        this.setState({ driverName: parsedMessage.driverName });
+        this.setState({ driverPhoneNumber: parsedMessage.driverPhoneNumber });
+        this.setState({ hasDriver: true });
+      }
     };
   }
 
   handleSubmit(event) {
-    console.log('submitFunction');
+    console.log("submitFunction");
     // Create a booking
     fetch("http://localhost:8080/users/booking", {
       method: "POST",
@@ -77,7 +87,7 @@ class User extends React.Component {
     })
       .then((response) => response.json())
       .then((response) => {
-        this.setState({finished: true});
+        this.setState({ finished: true });
         console.log(`got response -> send message ${JSON.stringify(response)}`);
         connection.send(`{
           "messageType": "BOOKING", 
@@ -92,7 +102,7 @@ class User extends React.Component {
       .catch((err) => {
         console.log(err);
       });
-    }
+  }
 
   handleChangeAddress(event) {
     this.setState({ address: event.target.value });
@@ -124,87 +134,101 @@ class User extends React.Component {
                       </Header>
                     </Grid.Column>
                   </Grid.Row>
-                  <div class="ui segment">
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Xin chào: </label>
-                        <label>{this.state.name}</label>
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Số điện thoại: </label>
-                        <label>{this.state.phoneNumber}</label>
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
+                  <div className="ui segment">
+                    <Grid.Row style={{ padding: "10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Xin chào: </label>
+                          <label>{this.state.name}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <Grid.Row style={{ padding: "10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Số điện thoại: </label>
+                          <label>{this.state.phoneNumber}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
 
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Điểm đón:</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <input
-                          name="address"
-                          type="text"
-                          placeholder="1 Lê Duẩn, Quận 1, Hồ Chí Minh"
-                          value={this.state.address}
-                          onChange={this.handleChangeAddress}
-                        />
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
+                    <Grid.Row style={{ padding: "10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Điểm đón:</label>
+                        </Grid.Column>
+                        <Grid.Column>
+                          <input
+                            name="address"
+                            type="text"
+                            placeholder="1 Lê Duẩn, Quận 1, Hồ Chí Minh"
+                            value={this.state.address}
+                            onChange={this.handleChangeAddress}
+                          />
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
 
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Chọn loại xe:</label>
-                      </Grid.Column>
-                      <Grid.Column>
-                        <Select
-                          style={{ width: "100%" }}
-                          options={options}
-                          placeholder="Chọn loại xe"
-                          value={this.state.carType}
-                          onChange={(event)=>this.handleChangeCarType(event)}
-                        />
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
+                    <Grid.Row style={{ padding: "10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Chọn loại xe:</label>
+                        </Grid.Column>
+                        <Grid.Column>
+                          <Select
+                            style={{ width: "100%" }}
+                            options={options}
+                            placeholder="Chọn loại xe"
+                            value={this.state.carType}
+                            onChange={(event) =>
+                              this.handleChangeCarType(event)
+                            }
+                          />
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
                   </div>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit" primary>Gọi xe</Button>
-                    <Button type="submit" secondary>Hủy gọi</Button>
+                    <Button type="submit" primary>
+                      Gọi xe
+                    </Button>
+                    <Button type="submit" secondary>
+                      Hủy gọi
+                    </Button>
                   </Grid.Row>
-                  <div class="ui segment">
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Tên bác tài: </label>
-                        <label>{this.state.driverName}</label>
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="left">
-                        <label>Số điện thoại: </label>
-                        <label>{this.state.driverName}</label>
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
-                  <Grid.Row style={{ padding: "10px" }}>
-                    <Form.Field>
-                      <Grid.Column align="center">
-                        <label>Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!</label>
-                      </Grid.Column>
-                    </Form.Field>
-                  </Grid.Row>
-                  </div>
+                  {this.state.hasDriver === false ? (
+                    ""
+                  ) : (
+                    <div className="ui segment">
+                      <Grid.Row style={{ padding: "10px" }}>
+                        <Form.Field>
+                          <Grid.Column align="left">
+                            <label>Tên bác tài: </label>
+                            <label>{this.state.driverName}</label>
+                          </Grid.Column>
+                        </Form.Field>
+                      </Grid.Row>
+                      <Grid.Row style={{ padding: "10px" }}>
+                        <Form.Field>
+                          <Grid.Column align="left">
+                            <label>Số điện thoại: </label>
+                            <label>{this.state.driverPhoneNumber}</label>
+                          </Grid.Column>
+                        </Form.Field>
+                      </Grid.Row>
+                      <Grid.Row style={{ padding: "10px" }}>
+                        <Form.Field>
+                          <Grid.Column align="center">
+                            <label>
+                              {this.state.hasDriver === false
+                                ? ""
+                                : "Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!"}
+                            </label>
+                          </Grid.Column>
+                        </Form.Field>
+                      </Grid.Row>
+                    </div>
+                  )}
                 </Grid.Column>
               </Grid>
             </Form>
