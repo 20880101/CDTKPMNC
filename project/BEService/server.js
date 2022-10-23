@@ -6,7 +6,7 @@ const cors = require("cors");
 // Initalizes express server
 const express = require("express");
 const app = express();
-var expressWs = require('express-ws')(app);
+var expressWs = require("express-ws")(app);
 
 const usersRouter = require("./routes/users");
 
@@ -30,18 +30,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res, next) => {
-  console.log('get route', req.url);
-  res.json({message: 'Wellcom'});
+  console.log("get route", req.url);
+  res.json({ message: "Wellcom" });
   res.end();
 });
 
 // makes the app aware of routes in another folder
 app.use("/users", usersRouter);
 
-
-
 app.use(function (req, res, next) {
-  req.websocket = '/websocket';
+  req.websocket = "/websocket";
   return next();
 });
 
@@ -49,39 +47,38 @@ var CLIENTS = [];
 var DRIVERS = [];
 var ADMINS = [];
 var id;
-app.ws('/websocket', function(ws, req) {
-  ws.on('connection', (ws) => {
-    console.log('on connection');
-    console.log(ws)
+app.ws("/websocket", function (ws, req) {
+  ws.on("connection", (ws) => {
+    console.log("on connection");
+    console.log(ws);
   });
 
   // Reveive location from driver
-  ws.on('message', function(msg, request) {
+  ws.on("message", function (msg, request) {
     var parsedMessage = JSON.parse(msg);
     console.log("Receive message:" + JSON.stringify(parsedMessage));
-    if (parsedMessage.messageType === 'REGISTER') {
+    if (parsedMessage.messageType === "REGISTER") {
       processRegisterMessage(parsedMessage, ws);
-
-    } else if (parsedMessage.messageType === 'BOOKING') {
+    } else if (parsedMessage.messageType === "BOOKING") {
       //connection.send(`{"messageType": "BOOKING", "application":"CLIENT", "userId":${this.state.userId}}`);
       if (ADMINS?.length > 0) {
-        ADMINS.forEach(admin => {
-          console.log('Forward message to admin dashboard')
+        ADMINS.forEach((admin) => {
+          console.log("Forward message to admin dashboard");
           admin.send(msg, admin);
-        })
+        });
       }
-    } else if (parsedMessage.messageType === 'BOOKING_ALERT') {
+    } else if (parsedMessage.messageType === "BOOKING_ALERT") {
       if (DRIVERS?.length > 0) {
-        DRIVERS.forEach(driver => {
-          console.log('Forward message to admin drivers ')
+        DRIVERS.forEach((driver) => {
+          console.log("Forward message to admin drivers ");
           driver.send(msg, driver);
-        })
+        });
       }
     } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
       // {
-      //   "messageType": "BOOKING_ACCEPT", 
-      //   "application": "DRIVER", 
-      //   "clientId": "${this.state.clientId}", 
+      //   "messageType": "BOOKING_ACCEPT",
+      //   "application": "DRIVER",
+      //   "clientId": "${this.state.clientId}",
       //   "bookingId": "${this.state.bookingId}",
       //   "driverId": "${this.state.userId}",
       //   "driverName": "${this.state.name}",
@@ -89,22 +86,63 @@ app.ws('/websocket', function(ws, req) {
       //   }
       if (ADMINS.length > 0) {
         // let id = "ADMIN" + "-" + parsedMessage.clientId;
-        ADMINS.forEach(admin => {
-          console.log('Forward accept message from driver to admin dashboard')
+        ADMINS.forEach((admin) => {
+          console.log("Forward accept message from driver to admin dashboard");
           admin.send(msg, admin);
-        })
+        });
       }
     } else if (parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT") {
       console.log("Admin connect request send message to client and driver");
       if (DRIVERS.length > 0) {
-         let id = "DRIVER" + "-" + parsedMessage.driverId;
-         DRIVERS[id].send(msg, DRIVERS[id]);
-       }
-       if (CLIENTS.length > 0) {
-         let id = "CLIENT" + "-" + parsedMessage.clientId;
-         CLIENTS[id].send(msg, CLIENTS[id]);
-         // TODO Store booking with client and driver
-       }
+        let id = "DRIVER" + "-" + parsedMessage.driverId;
+        DRIVERS[id].send(msg, DRIVERS[id]);
+      }
+      if (CLIENTS.length > 0) {
+        let id = "CLIENT" + "-" + parsedMessage.clientId;
+        CLIENTS[id].send(msg, CLIENTS[id]);
+        // TODO Store booking with client and driver
+      }
+    } else if (parsedMessage.messageType === "BOOKING_CANCELED") {
+      // {
+      //   "messageType": "BOOKING_ACCEPT",
+      //   "application": "DRIVER",
+      //   "clientId": "${this.state.clientId}",
+      //   "bookingId": "${this.state.bookingId}",
+      //   "driverId": "${this.state.userId}",
+      //   "driverName": "${this.state.name}",
+      //   "driverPhoneNumber": "${this.state.phoneNumber}"
+      //   }
+      if (parsedMessage.application === 'DRIVER') {
+        // Driver cancel booking:
+        // - Notify for user
+        if (CLIENTS.length > 0) {
+          let id = "CLIENT" + "-" + parsedMessage.clientId;
+          CLIENTS[id]?.send(msg, CLIENTS[id]);
+        }
+        // - Find another driver for user
+        if (ADMINS.length > 0) {
+          // let id = "ADMIN" + "-" + parsedMessage.clientId;
+          ADMINS.forEach((admin) => {
+            console.log("Forward canceled booking message to admin dashboard");
+            admin.send(msg, admin);
+          });
+        }
+      }
+      if (parsedMessage.application === 'CLIENT') {
+        // Client cancel booking:
+        // - Notify for driver
+        if (DRIVERS.length > 0) {
+          let id = "DRIVER" + "-" + parsedMessage.driverId;
+          DRIVERS[id]?.send(msg, DRIVERS[id]);
+        }
+        if (ADMINS.length > 0) {
+          // let id = "ADMIN" + "-" + parsedMessage.clientId;
+          ADMINS.forEach((admin) => {
+            console.log("Forward canceled booking message to admin dashboard");
+            admin.send(msg, admin);
+          });
+        }
+      }
     }
   });
 
@@ -113,29 +151,28 @@ app.ws('/websocket', function(ws, req) {
   console.log(CLIENTS.length);
 });
 
-function processRegisterMessage (parsedMessage, ws) {
-      id = parsedMessage.application + "-" + parsedMessage.userId;
-      console.log(id);  
-      if (parsedMessage.application === 'ADMIN') {
-        if (ADMINS[id] === null || ADMINS[id] === undefined) {
-          ADMINS[id] = ws;
-          ADMINS.push(ws);
-        }
-      } else if (parsedMessage.application === 'DRIVER') {
-        if (DRIVERS[id] === null || DRIVERS[id] === undefined) {
-          DRIVERS[id] = ws;
-          DRIVERS.push(ws);
-        }
-      } else if (parsedMessage.application === 'CLIENT') {
-        if (CLIENTS[id] === null || CLIENTS[id] === undefined) {
-          CLIENTS[id] = ws;
-          CLIENTS.push(ws);
-        }
-      } else {
-        ws.send('ERROR');
-      }
+function processRegisterMessage(parsedMessage, ws) {
+  id = parsedMessage.application + "-" + parsedMessage.userId;
+  console.log(id);
+  if (parsedMessage.application === "ADMIN") {
+    if (ADMINS[id] === null || ADMINS[id] === undefined) {
+      ADMINS[id] = ws;
+      ADMINS.push(ws);
+    }
+  } else if (parsedMessage.application === "DRIVER") {
+    if (DRIVERS[id] === null || DRIVERS[id] === undefined) {
+      DRIVERS[id] = ws;
+      DRIVERS.push(ws);
+    }
+  } else if (parsedMessage.application === "CLIENT") {
+    if (CLIENTS[id] === null || CLIENTS[id] === undefined) {
+      CLIENTS[id] = ws;
+      CLIENTS.push(ws);
+    }
+  } else {
+    ws.send("ERROR");
+  }
 }
-
 
 // setInterval(() => {
 //   // ws.clients.forEach((client) => {
@@ -145,15 +182,16 @@ function processRegisterMessage (parsedMessage, ws) {
 
 // Connect to db
 const db = require("./app/models");
+const { application } = require("express");
 db.mongoose
   .connect(db.url, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => {
     console.log("Connected to the database!");
   })
-  .catch(err => {
+  .catch((err) => {
     console.log("Cannot connect to the database!", err);
     process.exit();
   });

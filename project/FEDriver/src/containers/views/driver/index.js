@@ -30,13 +30,13 @@ class Driver extends React.Component {
     this.state = {
       userId: "11",
       name: "Tài xế 1",
-      address: "Tran Hung Dao, Quan 1, Ho Chi Minh",
+      address: " Số 2, Trần Hưng Đạo, Quận 1, Hồ Chí Minh",
       lng: 10,
       lat: 10,
       phoneNumber: "003551234",
       carType: "1",
       bookingDetail: "",
-      bookingId: "",
+      bookingId: undefined,
       clientId: undefined,
       clientName: "",
       clientAddress: "",
@@ -46,6 +46,8 @@ class Driver extends React.Component {
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleCancelBooking = this.handleCancelBooking.bind(this);
+    this.handleMeetClient = this.handleMeetClient.bind(this);
     this.wrapper = React.createRef();
   }
 
@@ -112,18 +114,92 @@ class Driver extends React.Component {
     };
 
     // Submit location
-    if (timerId === null) {
-      timerId = setInterval(function () {
-        // console.log('interval send location');
-        // connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
-      }, 2000);
-    }
+    // if (timerId === null) {
+    //   timerId = setInterval(function () {
+    //     console.log('interval send location to server');
+    //     console.log(this.state.userId);
+    //     fetch(
+    //       `http://localhost:8080/users/location`,
+    //       {
+    //         method: "PUT",
+    //         headers: {
+    //           "content-type": "application/json",
+    //           accept: "application/json",
+    //         },
+    //         body: JSON.stringify({
+    //           userId: this.state.userId,
+    //           address: this.state.address,
+    //           lng: 10.123,
+    //           lat: 1000.123,
+    //         })
+    //       }
+    //     )
+    //       .then((response) => response.json())
+    //       .then((response) => {
+    //         console.log(response);
+    //         this.setState({ clientName: response.name });
+    //       })
+    //       .catch((err) => {
+    //         console.log(err);
+    //       });
+    //     connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
+    //   }, 2000);
+    // }
   }
 
   componentWillUnmount() {
     if (timerId !== null) {
       clearInterval(timerId);
     }
+  }
+
+  handleChangeAddress(event) {
+    this.setState({ address: event.target.value });
+  }
+
+  handleMeetClient() {
+    fetch("http://localhost:8080/users/booking-status", {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        userId: this.state.userId,
+        _id: this.state.bookingId,
+        status: "MEET_CLIENT",
+
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(`got response -> send message ${JSON.stringify(response)}`);
+        this.state.bookingId = response._id;
+        this.state.hasBooking = true;
+        connection.send(`{
+          "messageType": "MEET_CLIENT", 
+          "application": "DRIVER", 
+          "userId": "${this.state.userId}",
+          "_id": "${this.state.bookingId}",
+          "clientId": "${this.state.clientId}"
+        }`);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  handleCancelBooking() {
+    if (this.state.bookingId && this.state.connected) {
+      console.log(`send cancel booking to server`);
+        connection.send(`{
+          "messageType": "BOOKING_CANCELED",
+          "application": "DRIVER",
+          "userId": "${this.state.userId}",
+          "_id": "${this.state.bookingId}",
+          "clientId": "${this.state.clientId}"
+          }`);
+        }
   }
 
   handleSubmit(event) {
@@ -162,7 +238,7 @@ class Driver extends React.Component {
       <>
         <div ref={this.wrapper}>
           <Container>
-            <Form onSubmit={this.handleSubmit}>
+            <Form>
               <Grid
                 textAlign="center"
                 style={{ height: "90vh", padding: "10px" }}
@@ -259,6 +335,7 @@ class Driver extends React.Component {
                       type="submit"
                       primary
                       disabled={this.state.connected}
+                      onClick={this.handleSubmit}
                     >
                       Nhận cuốc xe
                     </Button>
@@ -266,14 +343,18 @@ class Driver extends React.Component {
                     {this.state.connected === false ? (
                       ""
                     ) : (
-                      <Button primary disabled={!this.state.connected}>
+                      <Button primary disabled={!this.state.connected} onClick={this.handleMeetClient}>
                         Đến nơi
                       </Button>
                     )}
 
-                    <Button secondary disabled={this.state.connected}>
+                    {this.state.connected === false ? (
+                      ""
+                    ) : (
+                    <Button secondary onClick={this.handleCancelBooking}>
                       Hủy cuốc xe
                     </Button>
+                    )}
                     <Button disabled={this.state.connected}>Bỏ qua</Button>
                   </Grid.Row>
                 </Grid.Column>

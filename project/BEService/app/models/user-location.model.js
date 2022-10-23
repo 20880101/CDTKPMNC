@@ -1,9 +1,10 @@
 module.exports = (mongoose) => {
   var schema = mongoose.Schema(
     {
-      title: String,
-      description: String,
-      published: Boolean,
+      userId: String,
+      address: String,
+      lng: String,
+      lat: String
     },
     { timestamps: true }
   );
@@ -14,7 +15,7 @@ module.exports = (mongoose) => {
     return object;
   });
 
-  const Tutorial = mongoose.model("tutorial", schema);
+  const UserLocation = mongoose.model("user-location", schema);
 
-  return Tutorial;
+  return UserLocation;
 };

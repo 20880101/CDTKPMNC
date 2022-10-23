@@ -2,11 +2,13 @@ module.exports = (mongoose) => {
   var schema = mongoose.Schema(
     {
       userId: String,
+      phoneNumber: String,
       address: String,
       lng: String,
       lat: String,
       carType: String,
-      finished: Boolean
+      status: String,
+      lastUpdatedBy: String
     },
     { timestamps: true }
   );

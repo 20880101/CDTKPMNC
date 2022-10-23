@@ -3,12 +3,9 @@ import {
   Grid,
   Button,
   Form,
-  TextArea,
   Select,
   Header,
   Container,
-  Table,
-  Label,
 } from "semantic-ui-react";
 import DataTable from "react-data-table-component";
 
@@ -92,13 +89,17 @@ function handleSelectDriver(row) {
 const topAddressTableColumns = [
   {
     name: "Địa điểm đón",
-    selector: (row) => row.clientAddress,
+    selector: (row) => row.address,
   },
   {
     name: "Điền vào form",
     button: true,
-    cell: () => (
-      <button type="button" className="primary">
+    cell: (row) => (
+      <button
+        type="button"
+        className="primary"
+        onClick={(event) => handleAddress(row)}
+      >
         Chọn
       </button>
     ),
@@ -108,18 +109,27 @@ const topAddressTableColumns = [
 const lastBookingTableColumns = [
   {
     name: "Địa điểm đón",
-    selector: (row) => row.clientAddress,
+    selector: (row) => row.address,
   },
   {
     name: "Điền vào form",
     button: true,
-    cell: () => (
-      <button type="button" className="primary">
+    cell: (row) => (
+      <button
+        type="button"
+        className="primary"
+        onClick={(event) => handleAddress(row)}
+      >
         Chọn
       </button>
     ),
   },
 ];
+
+function handleAddress(row) {
+  console.log(row.address);
+  // TODO set address to form
+}
 
 class AdminDashboard extends React.Component {
   constructor(props) {
@@ -128,19 +138,24 @@ class AdminDashboard extends React.Component {
     this.state = {
       userId: "101",
       bookingId: "",
-      clientId: "1",
+      clientId: "",
       clientName: "",
       address: "",
       phoneNumber: "",
-      carType: "1",
+      carType: "",
+      distance: "5",
       drivers: [],
       top5Addresses: [],
       last5Addresses: [],
+      bookingCancelledByDriver: false,
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDriversChange = this.handleDriversChange.bind(this);
     // this.handleChangeCarType = this.handleChangeCarType.bind(this);
+    this.handleChangeDistance = this.handleChangeDistance.bind(this);
+    this.seachCustomer = this.seachCustomer.bind(this);
+    this.loadUserNameByPhone = this.loadUserNameByPhone.bind(this);
     this.wrapper = React.createRef();
   }
 
@@ -164,8 +179,14 @@ class AdminDashboard extends React.Component {
       if (parsedMessage.messageType === "BOOKING") {
         console.log(parsedMessage.messageType);
         this.handleBookingMessage(parsedMessage);
+        this.loadDataOfUser(parsedMessage.phoneNumber);
       } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
         this.handleBookingAccept(parsedMessage);
+      } else if (
+        parsedMessage.messageType === "BOOKING_CANCELED" &&
+        parsedMessage.application === "DRIVER"
+      ) {
+        this.state.setState({ bookingCancelledByDriver: true });
       }
     };
 
@@ -203,16 +224,87 @@ class AdminDashboard extends React.Component {
       });
   }
 
+  loadUserNameByPhone(phoneNumber) {
+    console.log(phoneNumber);
+    fetch(`http://localhost:8080/users/detail?phoneNumber=${phoneNumber}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response);
+        if (response?.name) {
+          this.setState({ clientName: response.name });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  loadDataOfUser(phoneSearch) {
+    console.log(phoneSearch);
+    // top5Addresses
+    fetch(
+      `http://localhost:8080/users/bookings-top5Addresses?phoneNumber=${phoneSearch}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+      }
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response);
+        let newList = [];
+        response.forEach((booking) => {
+          let address = {
+            address: booking._id.address,
+          };
+          newList.push(address);
+        });
+        this.setState({ top5Addresses: newList });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    // last5Addresses
+    fetch(
+      `http://localhost:8080/users/bookings-last5Addresses?phoneNumber=${phoneSearch}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+      }
+    )
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response);
+        let newList = [];
+        response.forEach((booking) => {
+          let address = {
+            userId: booking.userId,
+            bookingId: booking.bookingId,
+            address: booking.address,
+          };
+          newList.push(address);
+        });
+        this.setState({ last5Addresses: newList });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
   handleBookingAccept(parsedMessage) {
-    // sample received message{
-    //   "messageType": "BOOKING_ACCEPT",
-    //   "application": "DRIVER",
-    //   "clientId": "${this.state.clientId}",
-    //   "bookingId": "${this.state.bookingId}",
-    //   "driverId": "${this.state.userId}",
-    //   "driverName": "${this.state.name}",
-    //   "driverPhoneNumber": "${this.state.phoneNumber}"
-    //   }
     let driver = {
       clientId: parsedMessage.clientId,
       bookingId: parsedMessage.bookingId,
@@ -225,76 +317,72 @@ class AdminDashboard extends React.Component {
     this.handleDriversChange(newList);
   }
 
+  handleDriversChange(drivers) {
+    this.setState({ drivers: drivers });
+  }
+
   componentWillUnmount() {
     if (timerId !== null) {
       clearInterval(timerId);
     }
   }
 
-  handleDriversChange(drivers) {
-    this.setState({ drivers: drivers });
+  seachCustomer(event) {
+    this.loadDataOfUser(this.state.phoneNumber);
+    this.loadUserNameByPhone(this.state.phoneNumber);
   }
 
   handleSubmit(event) {
     // update booking status
-    // fetch("http://localhost:8080/users/booking-status", {
-    //   method: "POST",
-    //   headers: {
-    //     "content-type": "application/json",
-    //     accept: "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     _id: this.state.bookingId,
-    //     finish: "LOCKED",
-    //   }),
-    // })
-    // .then((response) => response.json())
-    // .then((response) => {
-    //   this.setState({finished: true});
-    //   console.log(`got response -> send message ${JSON.stringify(response)}`);
-    //   connection.send(`{
-    //     "messageType": "BOOKING_ALERT",
-    //     "application": "ADMIN",
-    //     "clientId": "${this.state.clientId}",
-    //     "clientName": "${this.state.clientName}"
-    //     "bookingId": "${this.state.bookingId}",
-    //     "address": "${this.state.address}",
-    //     "phoneNumber": "${this.state.phoneNumber}"
-    //     }`);
-    //   })
-    //   .catch((err) => {
-    //     console.log(err);
-    //   })
-
-    connection.send(`{
-        "messageType": "BOOKING_ALERT", 
-        "application": "ADMIN", 
-        "clientId": "${this.state.clientId}", 
+    fetch("http://localhost:8080/users/booking-status", {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        userId: this.state.userId,
+        _id: this.state.bookingId,
+        status: "LOCKED",
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        this.setState({ finished: true });
+        console.log(`got response -> send message ${JSON.stringify(response)}`);
+        connection.send(`{
+        "messageType": "BOOKING_ALERT",
+        "application": "ADMIN",
+        "clientId": "${this.state.clientId}",
         "clientName": "${this.state.clientName}",
         "bookingId": "${this.state.bookingId}",
         "address": "${this.state.address}",
         "phoneNumber": "${this.state.phoneNumber}"
         }`);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   handleChangeClientName(event) {
-    console.log(event.target.value);
     this.setState({ clientName: event.target.value });
   }
 
   handleChangePhoneNumber(event) {
-    console.log(event.target.value);
     this.setState({ phoneNumber: event.target.value });
   }
 
   handleChangeAddress(event) {
-    console.log(event.target.value);
     this.setState({ address: event.target.value });
   }
 
-  handleChangeCarType(event) {
-    console.log(event.target.value);
-    this.setState({ carType: event.target.value });
+  handleChangeCarType(event, value) {
+    this.setState({ carType: value.value });
+  }
+
+  handleChangeDistance(event) {
+    this.setState({ distance: event.target.value });
   }
 
   render() {
@@ -317,7 +405,7 @@ class AdminDashboard extends React.Component {
                 </Grid.Row>
               </Grid.Column>
             </Grid>
-            <Form onSubmit={this.handleSubmit}>
+            <Form>
               <Grid
                 textAlign="center"
                 style={{ height: "90vh", padding: "10px" }}
@@ -351,7 +439,7 @@ class AdminDashboard extends React.Component {
                         <input
                           name="clientName"
                           type="text"
-                          placeholder="Input client name..."
+                          placeholder="Tên khách hàng..."
                           value={this.state.clientName}
                           onChange={(event) =>
                             this.handleChangeClientName(event)
@@ -369,7 +457,7 @@ class AdminDashboard extends React.Component {
                         <input
                           name="phoneNumber"
                           type="text"
-                          placeholder="Input address..."
+                          placeholder="Số điện thoại khách hàng..."
                           value={this.state.phoneNumber}
                           onChange={(event) =>
                             this.handleChangePhoneNumber(event)
@@ -387,7 +475,7 @@ class AdminDashboard extends React.Component {
                         <input
                           name="address"
                           type="text"
-                          placeholder="Input address..."
+                          placeholder="Địa chỉ khách hàng..."
                           value={this.state.address}
                           onChange={(event) => this.handleChangeAddress(event)}
                         />
@@ -406,14 +494,39 @@ class AdminDashboard extends React.Component {
                           options={options}
                           placeholder="Chọn loại xe"
                           value={this.state.carType}
-                          onChange={(event) => this.handleChangeCarType(event)}
+                          onChange={(event, value) =>
+                            this.handleChangeCarType(event, value)
+                          }
                         />
                       </Grid.Column>
                     </Form.Field>
                   </Grid.Row>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit" primary>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Khoảng cách (km)</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                        <input
+                          name="distance"
+                          type="text"
+                          placeholder="Khoảng cách từ khách hàng đến tài xế..."
+                          value={this.state.distance}
+                          onChange={(event) => this.handleChangeDistance(event)}
+                        />
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Button type="submit" primary onClick={this.handleSubmit}>
                       Điều phối
+                    </Button>
+                    <Button
+                      type="submit"
+                      secondary
+                      onClick={this.seachCustomer}
+                    >
+                      Tìm theo Số điện thoại
                     </Button>
                   </Grid.Row>
 
@@ -423,6 +536,17 @@ class AdminDashboard extends React.Component {
                       textAlign: "left",
                     }}
                   >
+                    {this.state.bookingCancelledByDriver === false ? (
+                      ""
+                    ) : (
+                      <div>
+                        <p>
+                          Tài xế hủy cuốc xe, vui lòng chọn tài xế khác đón
+                          khách
+                        </p>
+                        <p />
+                      </div>
+                    )}
                     <label>Danh sách tài xế chấp nhận cuốc xe:</label>
                     <p />
                     <DataTable
@@ -437,7 +561,7 @@ class AdminDashboard extends React.Component {
                   style={{ maxWidth: 550, minWidth: 550, textAlign: "left" }}
                 >
                   <Grid.Row style={{ padding: "10px" }}>
-                    <label>Danh sách 5 điểm đón nhiều nhất:</label>+
+                    <label>Danh sách 5 điểm đón nhiều nhất:</label>
                     <p />
                     <DataTable
                       columns={topAddressTableColumns}

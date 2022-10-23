@@ -12,12 +12,12 @@ import {
 } from "semantic-ui-react";
 
 const options = [
-  { key: "1", text: "Xe máy", value: "1" },
-  { key: "4", text: "Xe 4 chỗ", value: "4" },
-  { key: "7", text: "Xe 7 chỗ", value: "7" },
-  { key: "35", text: "Xe 35 chỗ", value: "35" },
-  { key: "0", text: "Xe bán tải", value: "0" },
-  { key: "99", text: "Xe khác", value: "99" },
+  { text: "Xe máy", value: "1" },
+  { text: "Xe 4 chỗ", value: "4" },
+  { text: "Xe 7 chỗ", value: "7" },
+  { text: "Xe 35 chỗ", value: "35" },
+  { text: "Xe bán tải", value: "0" },
+  { text: "Xe khác", value: "99" },
 ];
 
 const url = "ws://localhost:8080/websocket";
@@ -37,11 +37,15 @@ class User extends React.Component {
       driverName: null,
       driverPhoneNumber: null,
       hasDriver: false,
+      bookingId: "",
+      hasBooking: false,
+      driverId: undefined,
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleChangeAddress = this.handleChangeAddress.bind(this);
     this.handleChangeCarType = this.handleChangeCarType.bind(this);
+    this.handleCancelBooking = this.handleCancelBooking.bind(this);
     this.wrapper = React.createRef();
   }
 
@@ -63,6 +67,8 @@ class User extends React.Component {
         this.setState({ driverName: parsedMessage.driverName });
         this.setState({ driverPhoneNumber: parsedMessage.driverPhoneNumber });
         this.setState({ hasDriver: true });
+        this.setState({ driverId: parsedMessage.driverId });
+        this.state.hasDriver = true;
       }
     };
   }
@@ -87,8 +93,9 @@ class User extends React.Component {
     })
       .then((response) => response.json())
       .then((response) => {
-        this.setState({ finished: true });
         console.log(`got response -> send message ${JSON.stringify(response)}`);
+        this.state.bookingId = response._id;
+        this.state.hasBooking = true;
         connection.send(`{
           "messageType": "BOOKING", 
           "application": "CLIENT", 
@@ -108,9 +115,45 @@ class User extends React.Component {
     this.setState({ address: event.target.value });
   }
 
-  handleChangeCarType(event) {
-    console.log(event.target.selected);
-    this.setState({ carType: event.target.key });
+  handleChangeCarType(event, value) {
+    this.setState({ carType: value.value});
+  }
+
+  handleCancelBooking(event) {
+    if (this.state.bookingId) {
+      fetch("http://localhost:8080/users/booking-status", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          userId: this.state.userId,
+          _id: this.state.bookingId,
+          status: "CANCELED"
+        }),
+      })
+        .then((response) => response.json())
+        .then((response) => {
+          console.log(`got response -> cancel booking`);
+          connection.send(`{
+          "messageType": "BOOKING_CANCELED",
+          "application": "CLIENT",
+          "userId": "${this.state.userId}",
+          "bookingId": "${this.state.bookingId}",
+          "driverId": "${this.state.driverId}"
+          }`);
+          this.state.hasBooking = false;
+          this.state.bookingId = '';
+          this.state.hasDriver = false;
+          this.state.driverId = '';
+          this.state.driverPhoneNumber = '';
+          this.state.driverName = '';
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   }
 
   render() {
@@ -118,7 +161,7 @@ class User extends React.Component {
       <>
         <div ref={this.wrapper}>
           <Container>
-            <Form onSubmit={this.handleSubmit}>
+            <Form>
               <Grid
                 textAlign="center"
                 style={{ height: "90vh", padding: "10px" }}
@@ -178,10 +221,11 @@ class User extends React.Component {
                           <Select
                             style={{ width: "100%" }}
                             options={options}
+                            text={options.text}
                             placeholder="Chọn loại xe"
                             value={this.state.carType}
-                            onChange={(event) =>
-                              this.handleChangeCarType(event)
+                            onChange={(event, value) =>
+                              this.handleChangeCarType(event, value)
                             }
                           />
                         </Grid.Column>
@@ -189,12 +233,25 @@ class User extends React.Component {
                     </Grid.Row>
                   </div>
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button type="submit" primary>
+                    <Button
+                      type="submit"
+                      disabled={!!this.state.hasBooking}
+                      primary
+                      onClick={this.handleSubmit}
+                    >
                       Gọi xe
                     </Button>
-                    <Button type="submit" secondary>
+                    {this.state.hasBooking === false ? (
+                      ""
+                    ) : (
+                      <Button
+                      secondary
+                      onClick={this.handleCancelBooking}
+                    >
                       Hủy gọi
                     </Button>
+                    )}
+                    
                   </Grid.Row>
                   {this.state.hasDriver === false ? (
                     ""
