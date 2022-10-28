@@ -85,7 +85,6 @@ class User extends React.Component {
       } 
       else if(parsedMessage.messageType === 'MEET_CLIENT') {
         this.setState({ meetDriver: true });
-        this.setState({ hasDriver: false });
       }
     };
   }

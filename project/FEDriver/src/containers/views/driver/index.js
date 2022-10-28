@@ -127,10 +127,10 @@ class Driver extends React.Component {
     // Get latitude & longitude from address.
     // Submit location
     if (timerId === null) {
-      var ref = this;
-      timerId = setInterval(function () {
-        ref.updateLocationOfUser(ref);
-      }, 5000);
+      // var ref = this;
+      // timerId = setInterval(function () {
+      //   ref.updateLocationOfUser(ref);
+      // }, 5000);
     }
     //var ref = this;
     //this.updateLocationOfUser(ref);
