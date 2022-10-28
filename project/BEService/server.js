@@ -74,24 +74,21 @@ app.ws("/websocket", function (ws, req) {
       if (DRIVERS?.length > 0) {
         const distance = parsedMessage.distance;
         // get location data of all drives and calculate distance.
-        let selectedDrivers = [];
-        
         // https://github.com/TijsM/distance-between-coordinates#readme
-        // DRIVERS
         MongoClient.connect(url, function (err, db) {
           if (err) throw err;
           var dbo = db.db("datxe_db");
           var cursor = dbo.collection("user-locations").find({ userId: { $ne: parsedMessage.clientId } });
           
           cursor.forEach((location) => {
-            console.log(location.address);
             var driver = DRIVERS["DRIVER-" + location.userId];
             if (driver) {
               if (location.lat !== undefined && location.lng !== undefined) {
                 let value  = getDistanceBetweenTwoPoints({lat: location.lat, lon: location.lng}, {lat: parsedMessage.lat, lon: parsedMessage.lng}, 'km');
                 console.log(value);
+                console.log("send alert to");
                 if (value <= parsedMessage.distance) {
-                  console.log("Forward message to admin drivers ");
+                  console.log("Forward message to drivers " + "DRIVER-" + location.userId + ", address:" + location.address);
                   driver.send(msg, driver);
                 }
               }
@@ -110,7 +107,6 @@ app.ws("/websocket", function (ws, req) {
       //   "driverPhoneNumber": "${this.state.phoneNumber}"
       //   }
       if (ADMINS.length > 0) {
-        // let id = "ADMIN" + "-" + parsedMessage.clientId;
         ADMINS.forEach((admin) => {
           console.log("Forward accept message from driver to admin dashboard");
           admin.send(msg, admin);
@@ -168,12 +164,19 @@ app.ws("/websocket", function (ws, req) {
           });
         }
       }
+    } else if (parsedMessage.messageType === 'MEET_CLIENT') {
+      if (ADMINS.length > 0) {
+        ADMINS.forEach((admin) => {
+          console.log("Forward message from driver to admin dashboard");
+          admin.send(msg, admin);
+        });
+      }
+      if (CLIENTS.length > 0) {
+        let id = "CLIENT-" + parsedMessage.clientId;
+        CLIENTS[id].send(msg, CLIENTS[id]);
+      }
     }
   });
-
-  // console.log('socket', req.websocket);
-  // clients.push(req.socket.remoteAddress);
-  console.log(CLIENTS.length);
 });
 
 function processRegisterMessage(parsedMessage, ws) {
@@ -197,6 +200,9 @@ function processRegisterMessage(parsedMessage, ws) {
   } else {
     ws.send("ERROR");
   }
+  console.log("ADMINS.length:" + ADMINS.length);
+  console.log("DRIVERS.length:" + DRIVERS.length);
+  console.log("CLIENTS.length:" + CLIENTS.length);
 }
 
 // setInterval(() => {

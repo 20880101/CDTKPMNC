@@ -11,7 +11,10 @@ import {
 } from "semantic-ui-react";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
+// AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk
+// AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8
+
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
 // set response region. Its optional.
@@ -39,8 +42,8 @@ class Driver extends React.Component {
       userId: "11",
       name: "Tài xế 1",
       address: localStorage.getItem("address"),
-      lng: undefined,
-      lat: undefined,
+      lng: undefined,// will login and get data from user location
+      lat: undefined,// will login and get data from user location
       phoneNumber: "003551234",
       carType: "1",
       bookingDetail: "",
@@ -123,49 +126,52 @@ class Driver extends React.Component {
 
     // Get latitude & longitude from address.
     // Submit location
-    // if (timerId === null) {
-    //   var ref = this;
-    //   timerId = setInterval(function () {
-    //     // console.log('interval send location to server');
-    //   }, 5000);
-    // }
-    var ref = this;
-    this.updateLocationOfUser(ref);
+    if (timerId === null) {
+      var ref = this;
+      timerId = setInterval(function () {
+        ref.updateLocationOfUser(ref);
+      }, 5000);
+    }
+    //var ref = this;
+    //this.updateLocationOfUser(ref);
   }
 
   updateLocationOfUser(ref) {
-    Geocode.fromAddress(ref.state.address).then(
-      (response) => {
-        const { lat, lng } = response.results[0].geometry.location;
-        console.log(lat, lng);
-        ref.state.lng = lng;
-        ref.state.lat = lat;
+    console.log('interval send location of driver to server');
+    // IT works
+    // Call google api to get long and lat of current address and update to user location table
+    // Geocode.fromAddress(ref.state.address).then(
+    //   (response) => {
+    //     const { lat, lng } = response.results[0].geometry.location;
+    //     console.log(lat, lng);
+    //     ref.state.lng = lng;
+    //     ref.state.lat = lat;
 
-        fetch("http://localhost:8080/users/location", {
-          method: "PUT",
-          headers: {
-            "content-type": "application/json",
-            accept: "application/json",
-          },
-          body: JSON.stringify({
-            userId: ref.state.userId,
-            address: ref.state.address,
-            lng: ref.state.lng,
-            lat: ref.state.lat,
-          }),
-        })
-          .then((response) => response.json())
-          .then((response) => {
-            console.log(response);
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      },
-      (error) => {
-        console.error(error);
-      }
-    );
+    //     fetch("http://localhost:8080/users/location", {
+    //       method: "PUT",
+    //       headers: {
+    //         "content-type": "application/json",
+    //         accept: "application/json",
+    //       },
+    //       body: JSON.stringify({
+    //         userId: ref.state.userId,
+    //         address: ref.state.address,
+    //         lng: ref.state.lng,
+    //         lat: ref.state.lat,
+    //       }),
+    //     })
+    //       .then((response) => response.json())
+    //       .then((response) => {
+    //         console.log(response);
+    //       })
+    //       .catch((err) => {
+    //         console.log(err);
+    //       });
+    //   },
+    //   (error) => {
+    //     console.error(error);
+    //   }
+    // );
   }
 
   componentWillUnmount() {
@@ -278,14 +284,6 @@ class Driver extends React.Component {
                         </Grid.Column>
                       </Form.Field>
                     </Grid.Row>
-                    <Grid.Row style={{ padding: "10px" }}>
-                      <Form.Field>
-                        <Grid.Column align="left">
-                          <label>Loại xe bác tài đang chạy: </label>
-                          <label>{this.state.carType}</label>
-                        </Grid.Column>
-                      </Form.Field>
-                    </Grid.Row>
                   </div>
 
                   {this.state.clientId === undefined ? (
@@ -323,7 +321,7 @@ class Driver extends React.Component {
                           </Grid.Column>
                         </Form.Field>
                       </Grid.Row>
-                      <label>
+                      <label style={{color: 'red'}}>
                         {this.state.connected === false
                           ? ""
                           : "Vui lòng đến đón khách hàng"}

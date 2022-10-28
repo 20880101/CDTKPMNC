@@ -4,14 +4,13 @@ import {
   Grid,
   Button,
   Form,
-  TextArea,
   Select,
   Header,
   Container,
 } from "semantic-ui-react";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
 // set response region. Its optional.
@@ -29,7 +28,6 @@ const options = [
 
 const url = "ws://localhost:8080/websocket";
 const connection = new WebSocket(url);
-let timerId = null;
 
 class User extends React.Component {
   constructor(props) {
@@ -52,7 +50,8 @@ class User extends React.Component {
       bookingId: "",
       hasBooking: false,
       driverId: undefined,
-      role: localStorage.getItem("role")
+      role: localStorage.getItem("role"),
+      meetDriver: false
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -83,7 +82,10 @@ class User extends React.Component {
         this.setState({ driverPhoneNumber: parsedMessage.driverPhoneNumber });
         this.setState({ hasDriver: true });
         this.setState({ driverId: parsedMessage.driverId });
-        this.state.hasDriver = true;
+      } 
+      else if(parsedMessage.messageType === 'MEET_CLIENT') {
+        this.setState({ meetDriver: true });
+        this.setState({ hasDriver: false });
       }
     };
   }
@@ -148,7 +150,9 @@ class User extends React.Component {
               "booking": "${response._id}",
               "address": "${this.state.address}",
               "phoneNumber": "${this.state.phoneNumber}",
-              "carType": "${this.state.carType}"
+              "carType": "${this.state.carType}",
+              "lng": ${this.state.lng},
+              "lat": ${this.state.lat}
             }`);
           })
           .catch((err) => {
@@ -293,7 +297,7 @@ class User extends React.Component {
                     >
                       Gọi xe
                     </Button>
-                    {this.state.hasBooking === false ? (
+                    {this.state.hasBooking === false && this.state.meetDriver == false ? (
                       ""
                     ) : (
                       <Button
@@ -332,6 +336,11 @@ class User extends React.Component {
                               {this.state.hasDriver === false
                                 ? ""
                                 : "Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!"}
+                            </label>
+                            <label>
+                              {this.state.meetDriver === false
+                                ? ""
+                                : "Bác tài đã tới nơi"}
                             </label>
                           </Grid.Column>
                         </Form.Field>

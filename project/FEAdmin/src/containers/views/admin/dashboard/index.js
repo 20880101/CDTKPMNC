@@ -11,7 +11,7 @@ import {
 import DataTable from "react-data-table-component";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
 // set response region. Its optional.
@@ -114,6 +114,7 @@ class AdminDashboard extends React.Component {
       top5Addresses: [],
       last5Addresses: [],
       bookingCancelledByDriver: false,
+      meetDriver: false
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -196,19 +197,20 @@ class AdminDashboard extends React.Component {
         this.handleBookingAccept(parsedMessage);
       } else if (
         parsedMessage.messageType === "BOOKING_CANCELED" &&
-        parsedMessage.application === "DRIVER"
-      ) {
+        parsedMessage.application === "DRIVER") {
         this.state.setState({ bookingCancelledByDriver: true });
+      } else if (parsedMessage.messageType === 'MEET_CLIENT') {
+        this.setState({ meetDriver: true });
       }
     };
 
     // Submit location
-    if (timerId === null) {
-      timerId = setInterval(function () {
-        // console.log('interval send location');
-        // connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
-      }, 2000);
-    }
+    // if (timerId === null) {
+    //   timerId = setInterval(function () {
+    //     // console.log('interval send location');
+    //     // connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
+    //   }, 2000);
+    // }
   }
 
   handleBookingMessage(parsedMessage) {
@@ -217,6 +219,8 @@ class AdminDashboard extends React.Component {
     this.setState({ address: parsedMessage.address });
     this.setState({ carType: parsedMessage.carType });
     this.setState({ phoneNumber: parsedMessage.phoneNumber });
+    this.setState({ lng: parsedMessage.lng});
+    this.setState({ lat: parsedMessage.lat});
 
     console.log(parsedMessage.userId);
     fetch(`http://localhost:8080/users/detail?userId=${parsedMessage.userId}`, {
@@ -359,37 +363,7 @@ class AdminDashboard extends React.Component {
           this.updateUserLocationAndCreateNewBooking();
       });
     } else {
-      // update booking status
-      fetch("http://localhost:8080/users/booking-status", {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-          accept: "application/json",
-        },
-        body: JSON.stringify({
-          userId: this.state.clientId,
-          _id: this.state.bookingId,
-          status: "LOCKED",
-        }),
-      })
-      .then((response) => response.json())
-      .then((response) => {
-        this.setState({ finished: true });
-        console.log(`got response -> send message ${JSON.stringify(response)}`);
-        connection.send(`{
-          "messageType": "BOOKING_ALERT",
-          "application": "ADMIN",
-          "clientId": "${this.state.clientId}",
-          "clientName": "${this.state.clientName}",
-          "bookingId": "${this.state.bookingId}",
-          "address": "${this.state.address}",
-          "phoneNumber": "${this.state.phoneNumber}",
-          "distance": "${this.state.distance}"
-        }`);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      this.updateBookingStatusAndSendAlert();
     }
   }
 
@@ -447,7 +421,7 @@ class AdminDashboard extends React.Component {
               "bookingId": "${this.state.bookingId}",
               "address": "${this.state.address}",
               "phoneNumber": "${this.state.phoneNumber}",
-              "distance": "${this.state.distance}",
+              "distance": ${this.state.distance},
               "lng": ${this.state.lng},
               "lat": ${this.state.lat}
             }`);
@@ -455,6 +429,42 @@ class AdminDashboard extends React.Component {
           .catch((err) => {
             console.log(err);
           });
+  }
+
+  updateBookingStatusAndSendAlert() {
+    // update booking status
+    fetch("http://localhost:8080/users/booking-status", {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        userId: this.state.clientId,
+        _id: this.state.bookingId,
+        status: "LOCKED",
+      }),
+    })
+    .then((response) => response.json())
+    .then((response) => {
+      this.setState({ finished: true });
+      console.log(`got response -> send message ${JSON.stringify(response)}`);
+      connection.send(`{
+        "messageType": "BOOKING_ALERT",
+        "application": "ADMIN",
+        "clientId": "${this.state.clientId}",
+        "clientName": "${this.state.clientName}",
+        "bookingId": "${this.state.bookingId}",
+        "address": "${this.state.address}",
+        "phoneNumber": "${this.state.phoneNumber}",
+        "distance": ${this.state.distance},
+        "lng": ${this.state.lng},
+        "lat": ${this.state.lat}
+      }`);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   }
 
   handleChangeClientName(event) {
@@ -639,6 +649,12 @@ class AdminDashboard extends React.Component {
                         <p />
                       </div>
                     )}
+                    <label style={{color: 'red'}}>
+                    {
+                      this.state.meetDriver === true ? "Tài xế đã đến nơi" : ""
+                    }
+                    </label>
+                    <br/>
                     <label>Danh sách tài xế chấp nhận cuốc xe:</label>
                     <p />
                     <DataTable
