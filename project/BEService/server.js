@@ -68,7 +68,11 @@ app.ws("/websocket", function (ws, req) {
         });
       }
     } else if (parsedMessage.messageType === "BOOKING_ALERT") {
+      // Logic here, just send alert to drivers in distance
       if (DRIVERS?.length > 0) {
+        const distance = parsedMessage.distance;
+        // get location data of all drives and calculate distance.
+
         DRIVERS.forEach((driver) => {
           console.log("Forward message to admin drivers ");
           driver.send(msg, driver);

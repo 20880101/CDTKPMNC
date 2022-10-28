@@ -1,4 +1,5 @@
 import React from "react";
+import Geocode from "react-geocode";
 import {
   Grid,
   Button,
@@ -8,6 +9,14 @@ import {
   Container,
 } from "semantic-ui-react";
 import DataTable from "react-data-table-component";
+
+// https://www.npmjs.com/package/react-geocode
+Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+// set response language. Defaults to english.
+Geocode.setLanguage("vi");
+// set response region. Its optional.
+// A Geocoding request with region=es (Spain) will return the Spanish city.
+Geocode.setRegion("vn");
 
 const options = [
   { key: "1", text: "Xe máy", value: "1" },
@@ -86,51 +95,6 @@ function handleSelectDriver(row) {
   connection.send(message);
 }
 
-const topAddressTableColumns = [
-  {
-    name: "Địa điểm đón",
-    selector: (row) => row.address,
-  },
-  {
-    name: "Điền vào form",
-    button: true,
-    cell: (row) => (
-      <button
-        type="button"
-        className="primary"
-        onClick={(event) => handleAddress(row)}
-      >
-        Chọn
-      </button>
-    ),
-  },
-];
-
-const lastBookingTableColumns = [
-  {
-    name: "Địa điểm đón",
-    selector: (row) => row.address,
-  },
-  {
-    name: "Điền vào form",
-    button: true,
-    cell: (row) => (
-      <button
-        type="button"
-        className="primary"
-        onClick={(event) => handleAddress(row)}
-      >
-        Chọn
-      </button>
-    ),
-  },
-];
-
-function handleAddress(row) {
-  console.log(row.address);
-  // TODO set address to form
-}
-
 class AdminDashboard extends React.Component {
   constructor(props) {
     super(props);
@@ -141,6 +105,8 @@ class AdminDashboard extends React.Component {
       clientId: "",
       clientName: "",
       address: "",
+      lng: undefined,
+      lat: undefined,
       phoneNumber: "",
       carType: "",
       distance: "5",
@@ -157,6 +123,52 @@ class AdminDashboard extends React.Component {
     this.seachCustomer = this.seachCustomer.bind(this);
     this.loadUserNameByPhone = this.loadUserNameByPhone.bind(this);
     this.wrapper = React.createRef();
+  }
+
+  
+  lastBookingTableColumns = [
+    {
+      name: "Địa điểm đón",
+      selector: (row) => row.address,
+    },
+    {
+      name: "Điền vào form",
+      button: true,
+      cell: (row) => (
+        <button
+          type="button"
+          className="primary"
+          onClick={(event) => this.handleAddress(row)}
+        >
+          Chọn
+        </button>
+      ),
+    },
+  ];
+
+  topAddressTableColumns = [
+    {
+      name: "Địa điểm đón",
+      selector: (row) => row.address,
+    },
+    {
+      name: "Điền vào form",
+      button: true,
+      cell: (row) => (
+        <button
+          type="button"
+          className="primary"
+          onClick={(event) => this.handleAddress(row)}
+        >
+          Chọn
+        </button>
+      ),
+    },
+  ];
+
+  handleAddress = (row) => {
+    console.log(row.address);
+    this.setState({address: row.address});
   }
 
   // After DOM ready
@@ -238,6 +250,7 @@ class AdminDashboard extends React.Component {
         console.log(response);
         if (response?.name) {
           this.setState({ clientName: response.name });
+          this.setState({ clientId: response.userId });
         }
       })
       .catch((err) => {
@@ -333,36 +346,113 @@ class AdminDashboard extends React.Component {
   }
 
   handleSubmit(event) {
-    // update booking status
-    fetch("http://localhost:8080/users/booking-status", {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify({
-        userId: this.state.userId,
-        _id: this.state.bookingId,
-        status: "LOCKED",
-      }),
-    })
+    if (this.state.bookingId === "") {
+       // create booking if it is creating by admin       
+      Geocode.fromAddress(this.state.address).then(
+        (response) => {
+          const { lat, lng } = response.results[0].geometry.location;
+          console.log(lng, lat);
+          this.state.lng = lng;
+          this.state.lat = lat;
+
+          // update user location and create new booking
+          this.updateUserLocationAndCreateNewBooking();
+      });
+    } else {
+      // update booking status
+      fetch("http://localhost:8080/users/booking-status", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          userId: this.state.clientId,
+          _id: this.state.bookingId,
+          status: "LOCKED",
+        }),
+      })
       .then((response) => response.json())
       .then((response) => {
         this.setState({ finished: true });
         console.log(`got response -> send message ${JSON.stringify(response)}`);
         connection.send(`{
-        "messageType": "BOOKING_ALERT",
-        "application": "ADMIN",
-        "clientId": "${this.state.clientId}",
-        "clientName": "${this.state.clientName}",
-        "bookingId": "${this.state.bookingId}",
-        "address": "${this.state.address}",
-        "phoneNumber": "${this.state.phoneNumber}"
+          "messageType": "BOOKING_ALERT",
+          "application": "ADMIN",
+          "clientId": "${this.state.clientId}",
+          "clientName": "${this.state.clientName}",
+          "bookingId": "${this.state.bookingId}",
+          "address": "${this.state.address}",
+          "phoneNumber": "${this.state.phoneNumber}",
+          "distance": "${this.state.distance}"
         }`);
       })
       .catch((err) => {
         console.log(err);
       });
+    }
+  }
+
+  updateUserLocationAndCreateNewBooking() {
+    console.log('update current location');
+        fetch("http://localhost:8080/users/location", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: this.state.clientId,
+            address: this.state.address,
+            lng: this.state.lng,
+            lat: this.state.lat
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        console.log('Create a booking');
+        fetch("http://localhost:8080/users/booking", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: this.state.clientId,
+            address: this.state.address,
+            phoneNumber: this.state.phoneNumber,
+            lng: this.state.lng,
+            lat: this.state.lat,
+            carType: this.state.carType,
+            status: 'LOCKED'
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(`got response -> send message ${JSON.stringify(response)}`);
+            this.state.bookingId = response._id;
+            this.setState({ finished: true });
+            console.log(`got response -> send message ${JSON.stringify(response)}`);
+            connection.send(`{
+              "messageType": "BOOKING_ALERT",
+              "application": "ADMIN",
+              "clientId": "${this.state.clientId}",
+              "clientName": "${this.state.clientName}",
+              "bookingId": "${this.state.bookingId}",
+              "address": "${this.state.address}",
+              "phoneNumber": "${this.state.phoneNumber}",
+              "distance": "${this.state.distance}"
+            }`);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
   }
 
   handleChangeClientName(event) {
@@ -564,7 +654,7 @@ class AdminDashboard extends React.Component {
                     <label>Danh sách 5 điểm đón nhiều nhất:</label>
                     <p />
                     <DataTable
-                      columns={topAddressTableColumns}
+                      columns={this.topAddressTableColumns}
                       data={this.state.top5Addresses}
                       noDataComponent="Chưa có dữ liệu"
                       customStyles={customStyles}
@@ -574,7 +664,7 @@ class AdminDashboard extends React.Component {
                     <label>Danh sách 5 cuốc xe gần nhất:</label>
                     <p />
                     <DataTable
-                      columns={lastBookingTableColumns}
+                      columns={this.lastBookingTableColumns}
                       data={this.state.last5Addresses}
                       noDataComponent="Chưa có dữ liệu"
                       customStyles={customStyles}

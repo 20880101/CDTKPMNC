@@ -8,33 +8,25 @@ router.get("/initData", async function (req, res) {
   console.log("get route", req.url);
   // data the conserves our API quota for development
   try {
-    // userId: String,
-    // name: String,
-    // phoneNumber: String,
-    // password: String,
-    // gender: String,
-    // userRole: String,
-    // activated: Boolean
-
     var users = [
-      { userId: "1", name: "Nguyen Thi Thuy Trang 1", phoneNumber: "123456789", role: "CLIENT", activated: true },
-      { userId: "2", name: "Nguyen Thi Thuy Trang 2", phoneNumber: "222222222", role: "CLIENT", activated: true },
-      { userId: "3", name: "Nguyen Thi Thuy Trang 3", phoneNumber: "333333333", role: "CLIENT", activated: true },
+      { userId: "1", name: "Nguyen Thi Thuy Trang 1", phoneNumber: "123456789", role: "CLIENT", activated: true, password: "123456" },
+      { userId: "2", name: "Nguyen Thi Thuy Trang 2", phoneNumber: "1000000001", role: "CLIENT", activated: true, password: "123456" },
+      { userId: "3", name: "Nguyen Thi Thuy Trang 3", phoneNumber: "1000000002", role: "CLIENT", activated: true, password: "123456" },
 
-      { userId: "11", name: "Tài xế 1", role: "DRIVER", phoneNumber: "555555555", activated: true},
-      { userId: "12", name: "Tài xế 2", role: "DRIVER", phoneNumber: "666666666", activated: true },
-      { userId: "13", name: "Tài xế 3", role: "DRIVER", phoneNumber: "777777777", activated: true },
-      { userId: "14", name: "Tài xế 4", role: "DRIVER", phoneNumber: "999999999", activated: true },
-      { userId: "15", name: "Tài xế 5", role: "DRIVER" },
-      { userId: "16", name: "Tài xế 6", role: "DRIVER" },
-      { userId: "17", name: "Tài xế 7", role: "DRIVER" },
-      { userId: "18", name: "Tài xế 8", role: "DRIVER" },
-      { userId: "19", name: "Tài xế 9", role: "DRIVER" },
-      { userId: "20", name: "Tài xế 10", role: "DRIVER" },
+      { userId: "11", name: "Tài xế 1", role: "DRIVER", phoneNumber: "5000000001", activated: true, password: "123456"},
+      { userId: "12", name: "Tài xế 2", role: "DRIVER", phoneNumber: "5000000002", activated: true, password: "123456"},
+      { userId: "13", name: "Tài xế 3", role: "DRIVER", phoneNumber: "5000000003", activated: true, password: "123456"},
+      { userId: "14", name: "Tài xế 4", role: "DRIVER", phoneNumber: "5000000004", activated: true, password: "123456"},
+      { userId: "15", name: "Tài xế 5", role: "DRIVER", phoneNumber: "5000000005",password: "123456" },
+      { userId: "16", name: "Tài xế 6", role: "DRIVER", phoneNumber: "5000000006",password: "123456" },
+      { userId: "17", name: "Tài xế 7", role: "DRIVER", phoneNumber: "5000000007",password: "123456" },
+      { userId: "18", name: "Tài xế 8", role: "DRIVER", phoneNumber: "5000000008",password: "123456" },
+      { userId: "19", name: "Tài xế 9", role: "DRIVER", phoneNumber: "5000000009",password: "123456" },
+      { userId: "20", name: "Tài xế 10", role: "DRIVER", phoneNumber: "5000000010",password: "123456" },
 
-      { userId: "101", name: "Admin 1", role: "ADMIN" },
-      { userId: "102", name: "Admin 2", role: "ADMIN" },
-      { userId: "103", name: "Admin 3", role: "ADMIN" },
+      { userId: "101", name: "Admin 1", role: "ADMIN", phoneNumber: "9000000001", password: "123456" },
+      { userId: "102", name: "Admin 2", role: "ADMIN", phoneNumber: "9000000002", password: "123456" },
+      { userId: "103", name: "Admin 3", role: "ADMIN", phoneNumber: "9000000003", password: "123456" },
     ];
     MongoClient.connect(url, function (err, db) {
       if (err) throw err;
@@ -44,6 +36,44 @@ router.get("/initData", async function (req, res) {
         console.log("documents inserted");
         db.close();
         console.log(out);
+        res.json({ ...users });
+      });
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send("Error.");
+  }
+});
+
+router.get("/initDataLocation", async function (req, res) {
+  console.log("get route", req.url);
+  // data the conserves our API quota for development
+  try {
+    var userLocations = [
+      { userId: "1", name: "Nguyen Thi Thuy Trang 1", address: "1, Lê Duẩn, Quận 1, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "2", name: "Nguyen Thi Thuy Trang 2", address: "2, Xô Viết Nghệ Tĩnh, Bình Thạnh, Hồ Chí Minh",lng: undefined, lat: undefined },
+      { userId: "3", name: "Nguyen Thi Thuy Trang 3", address: "3, Cộng Hòa, Quận Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined},
+
+      { userId: "11", address: "1, Trần Hưng Đạo, Quận 1, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "12", address: "2, Quang Trung, Gò Vấp, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "13", address: "3, Âu Cơ, Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "14", address: "4, Tô Ký, Quận 12, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "15", address: "5, Tam Bình, Quận Thủ Đức, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "16", address: "6, Lê Văn Việt, Quận 9, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "17", address: "7, Nam Kỳ Khởi Nghĩa, Quận 3, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "18", address: "8, Cách Mạng Tháng 8, Quận 10, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "19", address: "9, Lạc Long Quân, Quận 5, Hồ Chí Minh",lng: undefined, lat: undefined},
+      { userId: "20", address: "10, Trường Sơn, Quận Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined}
+    ];
+    MongoClient.connect(url, function (err, db) {
+      if (err) throw err;
+      var dbo = db.db("datxe_db");
+      dbo.collection("user-locations").insertMany(userLocations, function (err, out) {
+        if (err) throw err;
+        console.log("documents inserted");
+        db.close();
+        console.log(out);
+        res.json({ ...userLocations });
       });
     });
   } catch (e) {
@@ -116,13 +146,19 @@ router.put("/location", function (req, res) {
       if (err) throw err;
       var dbo = db.db("datxe_db");
       dbo
-        .collection("user_location")
-        .updateOne({ userId: location.userId }, location, function (err, out) {
+        .collection("user-locations")
+        .updateOne({ userId: location.userId }, {
+          $set: {
+            address: location.address,
+            lat: location.lat,
+            lng: location.lng
+          },
+        }, function (err, out) {
           if (err) throw err;
           console.log("1 document updated");
           db.close();
           console.log(out);
-          res.json({ ...booking });
+          res.json({ ...out });
         });
     });
   } catch (e) {
@@ -179,6 +215,42 @@ router.put("/booking-status", function (req, res) {
 //         res.status(500).send('Error.')
 //     }
 // })
+
+router.post("/login", async function (req, res) {
+  console.log("user login ", req.url);
+  // data the conserves our API quota for development
+  console.log(req.body);
+  var loginRequest = { ...req.body };
+  try {
+    MongoClient.connect(url, function (err, db) {
+      if (err) throw err;
+      var dbo = db.db("datxe_db");
+      var result = dbo
+        .collection("users")
+        .findOne(loginRequest, function (err, result) {
+          if (err) throw err;
+          console.log(result);
+          if (result !== null) {
+            res.json({
+              name: result.name,
+              phoneNumber: result.phoneNumber,
+              userId: result.userId,
+              gender: result.gender,
+              activated: result.activated,
+              role: result.role,
+              id: result._id
+            });
+          } else {
+            res.json({error:'Không tìn thấy người dùng'});
+          }
+          db.close();
+        });
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send("Error.");
+  }
+});
 
 // define the default route that fetches all of our notes
 router.get("/detail", async function (req, res) {

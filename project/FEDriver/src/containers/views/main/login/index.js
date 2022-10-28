@@ -23,7 +23,7 @@ class Login extends React.Component {
     // alert('A name was submitted: ' + this.state.password);
     // alert('A name was submitted: ' + this.state.agree);
     // creates entity
-    fetch("https://localhost:8080/user/login", {
+    fetch("http://localhost:8080/user/login", {
       method: "POST",
       headers: {
         "content-type": "application/json",

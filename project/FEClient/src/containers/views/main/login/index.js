@@ -1,68 +1,63 @@
-import React from "react";
+import React, {useState} from "react";
 import { Grid, Button, Form, Header, Container } from "semantic-ui-react";
+import { useNavigate } from "react-router-dom";
 
-class Login extends React.Component {
-  constructor(props) {
-    super(props);
+const Login = () => {
+  const navigate = useNavigate();
 
-    this.state = {
-      username: "",
-      password: "",
-      agree: false,
-    };
+  const [userId, setUserId] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [agree, setAgree] = useState(false);
 
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleChangePassword = this.handleChangePassword.bind(this);
-    this.handleChangeUserName = this.handleChangeUserName.bind(this);
-    this.handleCheck = this.handleCheck.bind(this);
-    this.wrapper = React.createRef();
-  }
+  localStorage.setItem("authenticated", "");
+  localStorage.setItem("userId", "");
+  localStorage.setItem("name", "");
+  localStorage.setItem("phoneNumber", "");
+  localStorage.setItem("role", "");
+  localStorage.setItem("activated", "");
 
-  handleSubmit(event) {
-    // alert('A name was submitted: ' + this.state.username);
-    // alert('A name was submitted: ' + this.state.password);
-    // alert('A name was submitted: ' + this.state.agree);
-    // creates entity
-    fetch("https://localhost:8080/user/login", {
+  const handleSubmit = (event) => {
+    fetch("http://localhost:8080/users/login", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         accept: "application/json",
       },
       body: JSON.stringify({
-        username: this.state.username,
-        password: this.state.password,
+        phoneNumber: phoneNumber,
+        password: password,
       }),
     })
       .then((response) => response.json())
       .then((response) => {
         console.log(response);
+        if (response.error === undefined) {
+          localStorage.setItem("authenticated", response.id);
+          localStorage.setItem("userId", response.userId);
+          localStorage.setItem("name", response.name);
+          localStorage.setItem("phoneNumber", response.phoneNumber);
+          localStorage.setItem("role", response.role);
+          localStorage.setItem("activated", response.activated);
+          navigate("/user");
+        } else {
+          setError(response.error);
+        }
       })
       .catch((err) => {
         console.log(err);
       });
   }
 
-  register() {}
+  const register = (event) => {}
 
-  handleChangeUserName(event) {
-    this.setState({ username: event.target.value });
-  }
-
-  handleChangePassword(event) {
-    this.setState({ password: event.target.value });
-  }
-
-  handleCheck(event) {
-    this.setState({ agree: !event.target.value });
-  }
-
-  render() {
     return (
       <>
-        <div ref={this.wrapper}>
+        <div>
           <Container>
-            <Form onSubmit={this.handleSubmit}>
+            <Form>
               <Grid
                 textAlign="center"
                 style={{ height: "90vh" }}
@@ -78,18 +73,29 @@ class Login extends React.Component {
                       <Header as="h4">Đăng nhập vào hệ thống dành cho người dùng</Header>
                     </Grid.Column>
                   </Grid.Row>
+
                   <Grid.Row style={{ padding: "10px" }}>
                     <Form.Field>
                       <Grid.Column align="left">
-                        <label>Tên đăng nhập</label>
+                        <label>{error}</label>
+                      </Grid.Column>
+                      <Grid.Column>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Số điện thoại đăng nhập</label>
                       </Grid.Column>
                       <Grid.Column>
                         <input
-                          name="username"
+                          name="phoneNumber"
                           type="text"
-                          placeholder="trangnguyen"
-                          value={this.state.username}
-                          onChange={this.handleChangeUserName}
+                          placeholder="123456789"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
                         />
                       </Grid.Column>
                     </Form.Field>
@@ -103,8 +109,8 @@ class Login extends React.Component {
                         <input
                           name="password"
                           type="password"
-                          value={this.state.password}
-                          onChange={this.handleChangePassword}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
                         />
                       </Grid.Column>
                     </Form.Field>
@@ -113,8 +119,8 @@ class Login extends React.Component {
                     <Form.Field>
                       {/* <Checkbox checked={this.state.agree} onChange={this.handleCheck} label="Tôi hoàn toàn đồng ý với các điều khoản sử dụng" /> */}
                     </Form.Field>
-                    <Button type="submit">Đăng nhập</Button>
-                    <Button type="submit" onClick={this.register}>
+                    <Button type="submit" onClick={handleSubmit}>Đăng nhập</Button>
+                    <Button type="submit" onClick={register}>
                       Đăng ký
                     </Button>
                   </Grid.Row>
@@ -131,6 +137,5 @@ class Login extends React.Component {
       </>
     );
   }
-}
 
-export default Login;
+  export default Login;

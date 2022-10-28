@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import React from "react";
+import Geocode from "react-geocode";
 
 import {
   Grid,
@@ -9,6 +9,14 @@ import {
   Header,
   Container,
 } from "semantic-ui-react";
+
+// https://www.npmjs.com/package/react-geocode
+Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+// set response language. Defaults to english.
+Geocode.setLanguage("vi");
+// set response region. Its optional.
+// A Geocoding request with region=es (Spain) will return the Spanish city.
+Geocode.setRegion("vn");
 
 const options = [
   { key: "1", text: "Xe máy", value: "1" },
@@ -30,9 +38,9 @@ class Driver extends React.Component {
     this.state = {
       userId: "11",
       name: "Tài xế 1",
-      address: " Số 2, Trần Hưng Đạo, Quận 1, Hồ Chí Minh",
-      lng: 10,
-      lat: 10,
+      address: localStorage.getItem("address"),
+      lng: undefined,
+      lat: undefined,
       phoneNumber: "003551234",
       carType: "1",
       bookingDetail: "",
@@ -43,6 +51,7 @@ class Driver extends React.Component {
       clientPhoneNumber: "",
       isBusy: false,
       connected: false,
+      role: localStorage.getItem("role")
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -82,7 +91,6 @@ class Driver extends React.Component {
       ) {
         this.setState({ bookingId: parsedMessage.bookingId });
         this.setState({ clientId: parsedMessage.clientId });
-        // this.setState({ clientName: parsedMessage.clientName});
         this.setState({ clientPhoneNumber: parsedMessage.phoneNumber });
         this.setState({ clientAddress: parsedMessage.address });
         this.setState({ isBusy: true });
@@ -113,37 +121,45 @@ class Driver extends React.Component {
       }
     };
 
+    // Get latitude & longitude from address.
     // Submit location
     // if (timerId === null) {
+    //   var ref = this;
     //   timerId = setInterval(function () {
-    //     console.log('interval send location to server');
-    //     console.log(this.state.userId);
-    //     fetch(
-    //       `http://localhost:8080/users/location`,
-    //       {
-    //         method: "PUT",
-    //         headers: {
-    //           "content-type": "application/json",
-    //           accept: "application/json",
-    //         },
-    //         body: JSON.stringify({
-    //           userId: this.state.userId,
-    //           address: this.state.address,
-    //           lng: 10.123,
-    //           lat: 1000.123,
-    //         })
+    //     // console.log('interval send location to server');
+    //     Geocode.fromAddress(ref.state.address).then(
+    //       (response) => {
+    //         const { lat, lng } = response.results[0].geometry.location;
+    //         console.log(lat, lng);
+    //         ref.state.lng = lng;
+    //         ref.state.lat = lat;
+    
+    //           fetch("http://localhost:8080/users/location", {
+    //             method: "PUT",
+    //             headers: {
+    //               "content-type": "application/json",
+    //               accept: "application/json",
+    //             },
+    //             body: JSON.stringify({
+    //               userId: ref.state.userId,
+    //               address: ref.state.address,
+    //               lng: ref.state.lng,
+    //               lat: ref.state.lat
+    //             }),
+    //           })
+    //             .then((response) => response.json())
+    //             .then((response) => {
+    //               console.log(response);
+    //             })
+    //             .catch((err) => {
+    //               console.log(err);
+    //             });
+    //       },
+    //       (error) => {
+    //         console.error(error);
     //       }
-    //     )
-    //       .then((response) => response.json())
-    //       .then((response) => {
-    //         console.log(response);
-    //         this.setState({ clientName: response.name });
-    //       })
-    //       .catch((err) => {
-    //         console.log(err);
-    //       });
-    //     connection.send(JSON.stringify(ref.state));//  `{"lng": ` + 10.121 + `, "lat": ` + 5.12520 + `}`
-    //   }, 2000);
+    //     );
+    //   }, 5000);
     // }
   }
 
@@ -213,25 +229,6 @@ class Driver extends React.Component {
       "driverPhoneNumber": "${this.state.phoneNumber}"
       }`);
   }
-
-  // fetch("https://localhost:8080/user/location", {
-  //   method: "POST",
-  //   headers: {
-  //     "content-type": "application/json",
-  //     accept: "application/json",
-  //   },
-  //   body: JSON.stringify({
-  //     address: this.state.address,
-  //     password: this.state.password,
-  //   }),
-  // })
-  //   .then((response) => response.json())
-  //   .then((response) => {
-  //     console.log(response);
-  //   })
-  //   .catch((err) => {
-  //     console.log(err);
-  //   });
 
   render() {
     return (

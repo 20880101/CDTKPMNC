@@ -3,8 +3,8 @@ module.exports = (mongoose) => {
     {
       userId: String,
       address: String,
-      lng: String,
-      lat: String
+      lng: Number,
+      lat: Number
     },
     { timestamps: true }
   );
@@ -15,7 +15,7 @@ module.exports = (mongoose) => {
     return object;
   });
 
-  const UserLocation = mongoose.model("user-location", schema);
+  const UserLocation = mongoose.model("user-locations", schema);
 
   return UserLocation;
 };

@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
-
+import Geocode from "react-geocode";
 import {
   Grid,
   Button,
@@ -10,6 +9,14 @@ import {
   Header,
   Container,
 } from "semantic-ui-react";
+
+// https://www.npmjs.com/package/react-geocode
+Geocode.setApiKey("AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8");
+// set response language. Defaults to english.
+Geocode.setLanguage("vi");
+// set response region. Its optional.
+// A Geocoding request with region=es (Spain) will return the Spanish city.
+Geocode.setRegion("vn");
 
 const options = [
   { text: "Xe máy", value: "1" },
@@ -28,11 +35,16 @@ class User extends React.Component {
   constructor(props) {
     super(props);
 
+    localStorage.getItem("authenticated");
+    localStorage.getItem("activated");
+
     this.state = {
-      userId: "1",
-      name: "Nguyen Thi Thuy Trang",
-      phoneNumber: "123456",
+      userId: localStorage.getItem("userId"),
+      name: localStorage.getItem("name"),
+      phoneNumber: localStorage.getItem("phoneNumber"),
       address: "1 Lê Duẩn, Quận 1, Hồ Chí Minh",
+      lng: undefined,
+      lat: undefined,
       carType: "1",
       driverName: null,
       driverPhoneNumber: null,
@@ -40,6 +52,7 @@ class User extends React.Component {
       bookingId: "",
       hasBooking: false,
       driverId: undefined,
+      role: localStorage.getItem("role")
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -50,9 +63,11 @@ class User extends React.Component {
   }
 
   componentDidMount() {
+    console.log('componentDidMount');
     connection.onopen = () => {
+      console.log('onopen');
       connection.send(
-        `{"messageType": "REGISTER", "application":"CLIENT", "userId":${this.state.userId}}`
+        `{"messageType": "REGISTER", "application": "${this.state.role}", "userId":${this.state.userId}}`
       );
     };
 
@@ -75,40 +90,77 @@ class User extends React.Component {
 
   handleSubmit(event) {
     console.log("submitFunction");
-    // Create a booking
-    fetch("http://localhost:8080/users/booking", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/json",
+    // Get latitude & longitude from address.
+    Geocode.fromAddress(this.state.address).then(
+      (response) => {
+        const { lat, lng } = response.results[0].geometry.location;
+        console.log(lng, lat);
+        this.state.lng = lng;
+        this.state.lat = lat;
+
+        console.log('update current location');
+        fetch("http://localhost:8080/users/location", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: this.state.userId,
+            address: this.state.address,
+            lng: this.state.lng,
+            lat: this.state.lat
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+
+        console.log('Create a booking');
+        fetch("http://localhost:8080/users/booking", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: this.state.userId,
+            address: this.state.address,
+            phoneNumber: this.state.phoneNumber,
+            lng: this.state.lng,
+            lat: this.state.lat,
+            carType: this.state.carType,
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(`got response -> send message ${JSON.stringify(response)}`);
+            this.state.bookingId = response._id;
+            this.state.hasBooking = true;
+            connection.send(`{
+              "messageType": "BOOKING", 
+              "application": "CLIENT", 
+              "userId": "${this.state.userId}", 
+              "booking": "${response._id}",
+              "address": "${this.state.address}",
+              "phoneNumber": "${this.state.phoneNumber}",
+              "carType": "${this.state.carType}"
+            }`);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       },
-      body: JSON.stringify({
-        userId: this.state.userId,
-        address: this.state.address,
-        phoneNumber: this.state.phoneNumber,
-        lng: 10.123,
-        lat: 1000.123,
-        carType: this.state.carType,
-      }),
-    })
-      .then((response) => response.json())
-      .then((response) => {
-        console.log(`got response -> send message ${JSON.stringify(response)}`);
-        this.state.bookingId = response._id;
-        this.state.hasBooking = true;
-        connection.send(`{
-          "messageType": "BOOKING", 
-          "application": "CLIENT", 
-          "userId": "${this.state.userId}", 
-          "booking": "${response._id}",
-          "address": "${this.state.address}",
-          "phoneNumber": "${this.state.phoneNumber}",
-          "carType": "${this.state.carType}"
-        }`);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      (error) => {
+        console.error(error);
+      }
+    );
+
+    
   }
 
   handleChangeAddress(event) {
