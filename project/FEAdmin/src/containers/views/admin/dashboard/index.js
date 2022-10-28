@@ -447,7 +447,9 @@ class AdminDashboard extends React.Component {
               "bookingId": "${this.state.bookingId}",
               "address": "${this.state.address}",
               "phoneNumber": "${this.state.phoneNumber}",
-              "distance": "${this.state.distance}"
+              "distance": "${this.state.distance}",
+              "lng": ${this.state.lng},
+              "lat": ${this.state.lat}
             }`);
           })
           .catch((err) => {

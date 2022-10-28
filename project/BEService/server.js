@@ -43,6 +43,8 @@ app.use(function (req, res, next) {
   return next();
 });
 
+var MongoClient = require("mongodb").MongoClient;
+var url = "mongodb://localhost:27017/";
 var CLIENTS = [];
 var DRIVERS = [];
 var ADMINS = [];
@@ -72,10 +74,29 @@ app.ws("/websocket", function (ws, req) {
       if (DRIVERS?.length > 0) {
         const distance = parsedMessage.distance;
         // get location data of all drives and calculate distance.
-
-        DRIVERS.forEach((driver) => {
-          console.log("Forward message to admin drivers ");
-          driver.send(msg, driver);
+        let selectedDrivers = [];
+        
+        // https://github.com/TijsM/distance-between-coordinates#readme
+        // DRIVERS
+        MongoClient.connect(url, function (err, db) {
+          if (err) throw err;
+          var dbo = db.db("datxe_db");
+          var cursor = dbo.collection("user-locations").find({ userId: { $ne: parsedMessage.clientId } });
+          
+          cursor.forEach((location) => {
+            console.log(location.address);
+            var driver = DRIVERS["DRIVER-" + location.userId];
+            if (driver) {
+              if (location.lat !== undefined && location.lng !== undefined) {
+                let value  = getDistanceBetweenTwoPoints({lat: location.lat, lon: location.lng}, {lat: parsedMessage.lat, lon: parsedMessage.lng}, 'km');
+                console.log(value);
+                if (value <= parsedMessage.distance) {
+                  console.log("Forward message to admin drivers ");
+                  driver.send(msg, driver);
+                }
+              }
+            }
+          });
         });
       }
     } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
@@ -98,11 +119,11 @@ app.ws("/websocket", function (ws, req) {
     } else if (parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT") {
       console.log("Admin connect request send message to client and driver");
       if (DRIVERS.length > 0) {
-        let id = "DRIVER" + "-" + parsedMessage.driverId;
+        let id = "DRIVER-" + parsedMessage.driverId;
         DRIVERS[id].send(msg, DRIVERS[id]);
       }
       if (CLIENTS.length > 0) {
-        let id = "CLIENT" + "-" + parsedMessage.clientId;
+        let id = "CLIENT-" + parsedMessage.clientId;
         CLIENTS[id].send(msg, CLIENTS[id]);
         // TODO Store booking with client and driver
       }
@@ -120,7 +141,7 @@ app.ws("/websocket", function (ws, req) {
         // Driver cancel booking:
         // - Notify for user
         if (CLIENTS.length > 0) {
-          let id = "CLIENT" + "-" + parsedMessage.clientId;
+          let id = "CLIENT-" + parsedMessage.clientId;
           CLIENTS[id]?.send(msg, CLIENTS[id]);
         }
         // - Find another driver for user
@@ -136,7 +157,7 @@ app.ws("/websocket", function (ws, req) {
         // Client cancel booking:
         // - Notify for driver
         if (DRIVERS.length > 0) {
-          let id = "DRIVER" + "-" + parsedMessage.driverId;
+          let id = "DRIVER-" + parsedMessage.driverId;
           DRIVERS[id]?.send(msg, DRIVERS[id]);
         }
         if (ADMINS.length > 0) {
@@ -187,6 +208,7 @@ function processRegisterMessage(parsedMessage, ws) {
 // Connect to db
 const db = require("./app/models");
 const { application } = require("express");
+const { getDistanceBetweenTwoPoints } = require("calculate-distance-between-coordinates");
 db.mongoose
   .connect(db.url, {
     useNewUrlParser: true,

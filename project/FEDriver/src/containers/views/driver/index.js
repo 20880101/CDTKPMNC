@@ -51,7 +51,7 @@ class Driver extends React.Component {
       clientPhoneNumber: "",
       isBusy: false,
       connected: false,
-      role: localStorage.getItem("role")
+      role: localStorage.getItem("role"),
     };
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -127,40 +127,45 @@ class Driver extends React.Component {
     //   var ref = this;
     //   timerId = setInterval(function () {
     //     // console.log('interval send location to server');
-    //     Geocode.fromAddress(ref.state.address).then(
-    //       (response) => {
-    //         const { lat, lng } = response.results[0].geometry.location;
-    //         console.log(lat, lng);
-    //         ref.state.lng = lng;
-    //         ref.state.lat = lat;
-    
-    //           fetch("http://localhost:8080/users/location", {
-    //             method: "PUT",
-    //             headers: {
-    //               "content-type": "application/json",
-    //               accept: "application/json",
-    //             },
-    //             body: JSON.stringify({
-    //               userId: ref.state.userId,
-    //               address: ref.state.address,
-    //               lng: ref.state.lng,
-    //               lat: ref.state.lat
-    //             }),
-    //           })
-    //             .then((response) => response.json())
-    //             .then((response) => {
-    //               console.log(response);
-    //             })
-    //             .catch((err) => {
-    //               console.log(err);
-    //             });
-    //       },
-    //       (error) => {
-    //         console.error(error);
-    //       }
-    //     );
     //   }, 5000);
     // }
+    var ref = this;
+    this.updateLocationOfUser(ref);
+  }
+
+  updateLocationOfUser(ref) {
+    Geocode.fromAddress(ref.state.address).then(
+      (response) => {
+        const { lat, lng } = response.results[0].geometry.location;
+        console.log(lat, lng);
+        ref.state.lng = lng;
+        ref.state.lat = lat;
+
+        fetch("http://localhost:8080/users/location", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: ref.state.userId,
+            address: ref.state.address,
+            lng: ref.state.lng,
+            lat: ref.state.lat,
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      },
+      (error) => {
+        console.error(error);
+      }
+    );
   }
 
   componentWillUnmount() {
@@ -184,7 +189,6 @@ class Driver extends React.Component {
         userId: this.state.userId,
         _id: this.state.bookingId,
         status: "MEET_CLIENT",
-
       }),
     })
       .then((response) => response.json())
@@ -208,14 +212,14 @@ class Driver extends React.Component {
   handleCancelBooking() {
     if (this.state.bookingId && this.state.connected) {
       console.log(`send cancel booking to server`);
-        connection.send(`{
+      connection.send(`{
           "messageType": "BOOKING_CANCELED",
           "application": "DRIVER",
           "userId": "${this.state.userId}",
           "_id": "${this.state.bookingId}",
           "clientId": "${this.state.clientId}"
           }`);
-        }
+    }
   }
 
   handleSubmit(event) {
@@ -340,7 +344,11 @@ class Driver extends React.Component {
                     {this.state.connected === false ? (
                       ""
                     ) : (
-                      <Button primary disabled={!this.state.connected} onClick={this.handleMeetClient}>
+                      <Button
+                        primary
+                        disabled={!this.state.connected}
+                        onClick={this.handleMeetClient}
+                      >
                         Đến nơi
                       </Button>
                     )}
@@ -348,9 +356,9 @@ class Driver extends React.Component {
                     {this.state.connected === false ? (
                       ""
                     ) : (
-                    <Button secondary onClick={this.handleCancelBooking}>
-                      Hủy cuốc xe
-                    </Button>
+                      <Button secondary onClick={this.handleCancelBooking}>
+                        Hủy cuốc xe
+                      </Button>
                     )}
                     <Button disabled={this.state.connected}>Bỏ qua</Button>
                   </Grid.Row>
