@@ -167,6 +167,29 @@ router.put("/location", function (req, res) {
   }
 });
 
+router.post("/location-detail", function (req, res) {
+  // extract booking text from request body
+  console.log(req.body);
+  try {
+    var location = { ...req.body };
+    MongoClient.connect(url, function (err, db) {
+      if (err) throw err;
+      var dbo = db.db("datxe_db");
+      dbo
+        .collection("user-locations")
+        .findOne(location, function (err, result) {
+          if (err) throw err;
+          console.log(result);
+          res.json({ ...result });
+          db.close();
+        });
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).send("Error.");
+  }
+});
+
 router.put("/booking-status", function (req, res) {
   // extract booking text from request body
   console.log("booking-status" + JSON.stringify(req.body));

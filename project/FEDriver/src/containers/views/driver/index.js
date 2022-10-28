@@ -39,12 +39,12 @@ class Driver extends React.Component {
     super(props);
 
     this.state = {
-      userId: "11",
-      name: "Tài xế 1",
+      userId: localStorage.getItem("userId"),
+      name: localStorage.getItem("name"),
       address: localStorage.getItem("address"),
-      lng: undefined,// will login and get data from user location
-      lat: undefined,// will login and get data from user location
-      phoneNumber: "003551234",
+      lng: localStorage.getItem("lng"),// will login and get data from user location
+      lat: localStorage.getItem("lat"),// will login and get data from user location
+      phoneNumber: localStorage.getItem("phoneNumber"),
       carType: "1",
       bookingDetail: "",
       bookingId: undefined,
@@ -127,13 +127,13 @@ class Driver extends React.Component {
     // Get latitude & longitude from address.
     // Submit location
     if (timerId === null) {
-      // var ref = this;
+      var ref = this;
       // timerId = setInterval(function () {
       //   ref.updateLocationOfUser(ref);
       // }, 5000);
     }
     //var ref = this;
-    //this.updateLocationOfUser(ref);
+    // this.updateLocationOfUser(ref);
   }
 
   updateLocationOfUser(ref) {
@@ -147,26 +147,26 @@ class Driver extends React.Component {
     //     ref.state.lng = lng;
     //     ref.state.lat = lat;
 
-    //     fetch("http://localhost:8080/users/location", {
-    //       method: "PUT",
-    //       headers: {
-    //         "content-type": "application/json",
-    //         accept: "application/json",
-    //       },
-    //       body: JSON.stringify({
-    //         userId: ref.state.userId,
-    //         address: ref.state.address,
-    //         lng: ref.state.lng,
-    //         lat: ref.state.lat,
-    //       }),
-    //     })
-    //       .then((response) => response.json())
-    //       .then((response) => {
-    //         console.log(response);
-    //       })
-    //       .catch((err) => {
-    //         console.log(err);
-    //       });
+        fetch("http://localhost:8080/users/location", {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            userId: ref.state.userId,
+            address: ref.state.address,
+            lng: ref.state.lng,
+            lat: ref.state.lat,
+          }),
+        })
+          .then((response) => response.json())
+          .then((response) => {
+            console.log(response);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
     //   },
     //   (error) => {
     //     console.error(error);

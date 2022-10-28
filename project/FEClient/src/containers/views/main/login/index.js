@@ -6,9 +6,9 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [userId, setUserId] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("123456789");
   const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("123456");
   const [error, setError] = useState("");
   const [agree, setAgree] = useState(false);
 
