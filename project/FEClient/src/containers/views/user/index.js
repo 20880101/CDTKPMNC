@@ -49,16 +49,12 @@ function User() {
   const [driverId, setDriverId] = useState("");
   const [role] = useState(localStorage.getItem("role"));
   const [meetDriver, setMeetDriver] = useState(false);
-  const [bookingCancelledByDriver, setBookingCancelledByDriver] =
-    useState(false);
+  const [bookingCancelledByDriver, setBookingCancelledByDriver] = useState(false);
 
   useEffect(() => {
     console.log("componentDidMount");
     connection.onopen = () => {
       console.log("onopen");
-      connection.send(
-        `{"messageType": "REGISTER", "application": "${role}", "userId":${userId}}`
-      );
     };
 
     connection.onerror = (error) => {
@@ -90,6 +86,10 @@ function User() {
 
   function handleSubmit(event) {
     console.log("submitFunction");
+    connection.send(
+      `{"messageType": "REGISTER", "application": "${role}", "userId":${userId}}`
+    );
+
     // Get latitude & longitude from address.
     Geocode.fromAddress(address).then(
       (response) => {
@@ -305,10 +305,11 @@ function User() {
 
                   {hasBooking === false ? (
                     ""
-                  ) : (
+                  ) : (meetDriver === false ? (
                     <Button secondary onClick={handleCancelBooking}>
                       Hủy gọi
-                    </Button>
+                    </Button> )
+                    : ""
                   )}
                 </Grid.Row>
                 <Grid.Row style={{ padding: "10px" }}>
@@ -341,12 +342,14 @@ function User() {
                     <Grid.Row style={{ padding: "10px" }}>
                       <Form.Field>
                         <Grid.Column align="center">
-                          <label>
-                            {hasDriver === false
-                              ? ""
-                              : "Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!"}
+                          <label style={{ color: "red" }}>
+                            {hasDriver === true && meetDriver === false
+                              ? "Vui lòng chờ trong giây lát, bác tài sẽ tới ngay!"
+                              : ""
+                            }
                           </label>
-                          <label>
+                          <br/>
+                          <label style={{ color: "red" }}>
                             {meetDriver === false ? "" : "Bác tài đã tới nơi"}
                           </label>
                         </Grid.Column>

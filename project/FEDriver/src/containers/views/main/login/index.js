@@ -23,6 +23,7 @@ const Login = () => {
   localStorage.setItem("lng", "");
 
   const handleSubmit = (event) => {
+
     fetch("http://localhost:8080/users/login", {
       method: "POST",
       headers: {
@@ -46,7 +47,6 @@ const Login = () => {
           localStorage.setItem("activated", response.activated);
           localStorage.setItem("address", response.address);
 
-          
           // Get address from server
             fetch("http://localhost:8080/users/location-detail", {
                 method: "POST",

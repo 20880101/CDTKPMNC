@@ -241,6 +241,7 @@ class AdminDashboard extends React.Component {
       .then((response) => {
         console.log(response);
         this.setState({ clientName: response.name });
+        this.setState({drivers: []});
       })
       .catch((err) => {
         console.log(err);
@@ -337,8 +338,18 @@ class AdminDashboard extends React.Component {
       driverPhoneNumber: parsedMessage.driverPhoneNumber,
     };
     let newList = [...this.state.drivers];
-    newList.push(driver);
-    this.handleDriversChange(newList);
+    let foundDriver = false;
+    this.state.drivers.forEach(d => 
+      {
+        if (d.driverId === driver.driverId && d.bookingId === driver.bookingId) {
+            foundDriver = true
+        }
+      }
+    );
+    if (foundDriver === false) {
+      newList.push(driver);
+      this.handleDriversChange(newList);
+    }
   }
 
   handleDriversChange(drivers) {

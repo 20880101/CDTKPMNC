@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Geocode from "react-geocode";
 
 import {
@@ -31,47 +31,50 @@ const options = [
 ];
 
 const url = "ws://localhost:8080/websocket";
-const connection = new WebSocket(url);
 let timerId = null;
 
-class Driver extends React.Component {
-  constructor(props) {
-    super(props);
+function Driver() {
+  const [userId] = useState(localStorage.getItem("userId"));
+  const [name] = useState(localStorage.getItem("name"));
+  const [address] = useState(localStorage.getItem("address"));
+  const [lng, setLng] = useState(localStorage.getItem("lng")); // will login and get data from user location
+  const [lat, setLat] = useState(localStorage.getItem("lat")); // will login and get data from user location
+  const [phoneNumber] = useState(localStorage.getItem("phoneNumber"));
+  const [carType, setCarType] = useState("Xe máy");
+  const [bookingId, setBookingId] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [clientPhoneNumber, setClientPhoneNumber] = useState("");
 
-    this.state = {
-      userId: localStorage.getItem("userId"),
-      name: localStorage.getItem("name"),
-      address: localStorage.getItem("address"),
-      lng: localStorage.getItem("lng"),// will login and get data from user location
-      lat: localStorage.getItem("lat"),// will login and get data from user location
-      phoneNumber: localStorage.getItem("phoneNumber"),
-      carType: "1",
-      bookingDetail: "",
-      bookingId: undefined,
-      clientId: undefined,
-      clientName: "",
-      clientAddress: "",
-      clientPhoneNumber: "",
-      isBusy: false,
-      connected: false,
-      role: localStorage.getItem("role"),
-    };
+  const [connected, setConnected] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [role] = useState(localStorage.getItem("role"));
+  const [canCancel, setCanCancel] = useState(false);
+  const [waitForConfirm, setWaitForConfirm] = useState(false);
 
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleCancelBooking = this.handleCancelBooking.bind(this);
-    this.handleMeetClient = this.handleMeetClient.bind(this);
-    this.wrapper = React.createRef();
-  }
-
+  let [connection, setConnection] = useState(new WebSocket(url));
   // After DOM ready
-  componentDidMount() {
-    var ref = this;
+  useEffect(() => {
     connection.onopen = () => {
+      console.log("open websocket");
       connection.send(
-        `{"messageType": "REGISTER", "application":"DRIVER", "userId":${this.state.userId}}`
+        `{"messageType": "REGISTER", "application":"DRIVER", "userId":${userId}}`
       );
     };
 
+      // Get latitude & longitude from address.
+      // Submit location
+      if (timerId === null) {
+        var ref = this;
+        timerId = setInterval(function () {
+          console.log('Update location automaticaly');
+          // updateLocationOfUser();
+        }, 5000);
+      }
+      // updateLocationOfUser();
+    }, [bookingId, connected, userId, clientId, connection]);
+  
     connection.onerror = (error) => {
       console.log(`WebSocket error: ${error}`);
     };
@@ -92,11 +95,11 @@ class Driver extends React.Component {
         parsedMessage.messageType === "BOOKING_ALERT" &&
         parsedMessage.application === "ADMIN"
       ) {
-        this.setState({ bookingId: parsedMessage.bookingId });
-        this.setState({ clientId: parsedMessage.clientId });
-        this.setState({ clientPhoneNumber: parsedMessage.phoneNumber });
-        this.setState({ clientAddress: parsedMessage.address });
-        this.setState({ isBusy: true });
+        setBookingId(parsedMessage.bookingId);
+        setClientId(parsedMessage.clientId);
+        setClientPhoneNumber(parsedMessage.phoneNumber);
+        setClientAddress(parsedMessage.address);
+        setIsBusy(true);
         console.log(parsedMessage.clientId);
         fetch(
           `http://localhost:8080/users/detail?userId=${parsedMessage.clientId}`,
@@ -111,41 +114,29 @@ class Driver extends React.Component {
           .then((response) => response.json())
           .then((response) => {
             console.log(response);
-            this.setState({ clientName: response.name });
+            setClientName(response.name);
           })
           .catch((err) => {
             console.log(err);
           });
       } else if (
         parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT" &&
-        parsedMessage.bookingId === this.state.bookingId
+        parsedMessage.bookingId === bookingId
       ) {
-        this.setState({ connected: true });
+        setConnected(true);
       }
     };
 
-    // Get latitude & longitude from address.
-    // Submit location
-    if (timerId === null) {
-      var ref = this;
-      // timerId = setInterval(function () {
-      //   ref.updateLocationOfUser(ref);
-      // }, 5000);
-    }
-    //var ref = this;
-    this.updateLocationOfUser(ref);
-  }
-
-  updateLocationOfUser(ref) {
-    console.log('interval send location of driver to server');
+  function updateLocationOfUser() {
+    console.log("interval send location of driver to server");
     // IT works
     // Call google api to get long and lat of current address and update to user location table
-    Geocode.fromAddress(ref.state.address).then(
+    Geocode.fromAddress(address).then(
       (response) => {
-        const { lat, lng } = response.results[0].geometry.location;
-        console.log(lat, lng);
-        ref.state.lng = lng;
-        ref.state.lat = lat;
+        const res = response.results[0].geometry.location;
+        console.log(res.lat, res.lng);
+        setLng(res.lng);
+        setLat(res.lat);
 
         fetch("http://localhost:8080/users/location", {
           method: "PUT",
@@ -154,10 +145,10 @@ class Driver extends React.Component {
             accept: "application/json",
           },
           body: JSON.stringify({
-            userId: ref.state.userId,
-            address: ref.state.address,
-            lng: ref.state.lng,
-            lat: ref.state.lat,
+            userId: userId,
+            address: address,
+            lng: lng,
+            lat: lat,
           }),
         })
           .then((response) => response.json())
@@ -174,17 +165,13 @@ class Driver extends React.Component {
     );
   }
 
-  componentWillUnmount() {
+  function componentWillUnmount() {
     if (timerId !== null) {
       clearInterval(timerId);
     }
   }
 
-  handleChangeAddress(event) {
-    this.setState({ address: event.target.value });
-  }
-
-  handleMeetClient() {
+  function handleMeetClient() {
     fetch("http://localhost:8080/users/booking-status", {
       method: "PUT",
       headers: {
@@ -192,182 +179,175 @@ class Driver extends React.Component {
         accept: "application/json",
       },
       body: JSON.stringify({
-        userId: this.state.userId,
-        _id: this.state.bookingId,
+        userId: userId,
+        _id: bookingId,
         status: "MEET_CLIENT",
       }),
     })
       .then((response) => response.json())
       .then((response) => {
         console.log(`got response -> send message ${JSON.stringify(response)}`);
-        this.state.bookingId = response._id;
-        this.state.hasBooking = true;
+        setBookingId( response._id);
         connection.send(`{
           "messageType": "MEET_CLIENT", 
           "application": "DRIVER", 
-          "userId": "${this.state.userId}",
-          "_id": "${this.state.bookingId}",
-          "clientId": "${this.state.clientId}"
+          "userId": "${userId}",
+          "_id": "${bookingId}",
+          "clientId": "${clientId}"
         }`);
+        setCanCancel(false);
       })
       .catch((err) => {
         console.log(err);
       });
   }
 
-  handleCancelBooking() {
-    if (this.state.bookingId && this.state.connected) {
+  function handleCancelBooking() {
+    if (bookingId && connected) {
       console.log(`send cancel booking to server`);
       connection.send(`{
           "messageType": "BOOKING_CANCELED",
           "application": "DRIVER",
-          "userId": "${this.state.userId}",
-          "_id": "${this.state.bookingId}",
-          "clientId": "${this.state.clientId}"
+          "userId": "${userId}",
+          "_id": "${bookingId}",
+          "clientId": "${clientId}"
           }`);
     }
   }
 
-  handleSubmit(event) {
+  function handleSubmit(event) {
     connection.send(`{
       "messageType": "BOOKING_ACCEPT", 
       "application": "DRIVER", 
-      "clientId": "${this.state.clientId}", 
-      "bookingId": "${this.state.bookingId}",
-      "driverId": "${this.state.userId}",
-      "driverName": "${this.state.name}",
-      "driverPhoneNumber": "${this.state.phoneNumber}"
+      "clientId": "${clientId}", 
+      "bookingId": "${bookingId}",
+      "driverId": "${userId}",
+      "driverName": "${name}",
+      "driverPhoneNumber": "${phoneNumber}"
       }`);
+      setCanCancel(true);
+      setWaitForConfirm(true);
   }
 
-  render() {
-    return (
-      <>
-        <div ref={this.wrapper}>
-          <Container>
-            <Form>
-              <Grid
-                textAlign="center"
-                style={{ height: "90vh", padding: "10px" }}
-                verticalAlign="middle"
-                pt={3}
-              >
-                <Grid.Column style={{ maxWidth: 450 }}>
+  return (
+    <>
+      <div>
+        <Container>
+          <Form>
+            <Grid
+              textAlign="center"
+              style={{ height: "90vh", padding: "10px" }}
+              verticalAlign="middle"
+              pt={3}
+            >
+              <Grid.Column style={{ maxWidth: 450 }}>
+                <Grid.Row style={{ padding: "10px" }}>
+                  <Grid.Column>
+                    <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
+                    <Header as="h4">Xin chào tài xế</Header>
+                  </Grid.Column>
+                </Grid.Row>
+                <div className="ui segment">
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Grid.Column>
-                      <Header as="h3">Ứng dụng đặt xe - Trang Nguyễn</Header>
-                      <Header as="h4">Xin chào tài xế</Header>
-                    </Grid.Column>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Tên bác tài: </label>
+                        <label>{name}</label>
+                      </Grid.Column>
+                    </Form.Field>
                   </Grid.Row>
-                  <div className="ui segment">
-                    <Grid.Row style={{ padding: "10px" }}>
-                      <Form.Field>
-                        <Grid.Column align="left">
-                          <label>Tên bác tài: </label>
-                          <label>{this.state.name}</label>
-                        </Grid.Column>
-                      </Form.Field>
-                    </Grid.Row>
-                    <Grid.Row style={{ padding: "10px" }}>
-                      <Form.Field>
-                        <Grid.Column align="left">
-                          <label>Số điện thoại: </label>
-                          <label>{this.state.phoneNumber}</label>
-                        </Grid.Column>
-                      </Form.Field>
-                    </Grid.Row>
-                    <Grid.Row style={{ padding: "10px" }}>
-                      <Form.Field>
-                        <Grid.Column align="left">
-                          <label>Địa điểm: </label>
-                          <label>{this.state.address}</label>
-                        </Grid.Column>
-                      </Form.Field>
-                    </Grid.Row>
-                  </div>
-
-                  {this.state.clientId === undefined ? (
-                    ""
-                  ) : (
-                    <div className="ui segment">
-                      <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
-                        <Form.Field>
-                          <Grid.Column align="left">
-                            <label>Thông tin cuốc xe</label>
-                          </Grid.Column>
-                        </Form.Field>
-                      </Grid.Row>
-                      <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
-                        <Form.Field>
-                          <Grid.Column align="left">
-                            <label>Tên hành khách: </label>
-                            <label>{this.state.clientName}</label>
-                          </Grid.Column>
-                        </Form.Field>
-                      </Grid.Row>
-                      <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
-                        <Form.Field>
-                          <Grid.Column align="left">
-                            <label>Số điện thoại khách hàng: </label>
-                            <label>{this.state.clientPhoneNumber}</label>
-                          </Grid.Column>
-                        </Form.Field>
-                      </Grid.Row>
-                      <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
-                        <Form.Field>
-                          <Grid.Column align="left">
-                            <label>Địa điểm đón: </label>
-                            <label>{this.state.clientAddress}</label>
-                          </Grid.Column>
-                        </Form.Field>
-                      </Grid.Row>
-                      <label style={{color: 'red'}}>
-                        {this.state.connected === false
-                          ? ""
-                          : "Vui lòng đến đón khách hàng"}
-                      </label>
-                    </div>
-                  )}
-
                   <Grid.Row style={{ padding: "10px" }}>
-                    <Button
-                      type="submit"
-                      primary
-                      disabled={this.state.bookingId !== undefined}
-                      onClick={this.handleSubmit}
-                    >
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Số điện thoại: </label>
+                        <label>{phoneNumber}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                  <Grid.Row style={{ padding: "10px" }}>
+                    <Form.Field>
+                      <Grid.Column align="left">
+                        <label>Địa điểm: </label>
+                        <label>{address}</label>
+                      </Grid.Column>
+                    </Form.Field>
+                  </Grid.Row>
+                </div>
+
+                {clientId === "" ? (
+                  ""
+                ) : (
+                  <div className="ui segment">
+                    <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Thông tin cuốc xe</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Tên hành khách: </label>
+                          <label>{clientName}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Số điện thoại khách hàng: </label>
+                          <label>{clientPhoneNumber}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Địa điểm đón: </label>
+                          <label>{clientAddress}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <label style={{ color: "red" }}>
+                      {connected === false ? "" : "Vui lòng đến đón khách hàng"}
+                    </label>
+                  </div>
+                )}
+
+                <Grid.Row style={{ padding: "10px" }}>
+                  {(bookingId !== '' && connected === false && waitForConfirm === false )? (
+                    <Button type="submit" primary onClick={handleSubmit}>
                       Nhận cuốc xe
                     </Button>
+                  ) : '' }
+                  {(bookingId !== '' && connected === false) ? (<Button>Bỏ qua</Button>) : "" }
 
-                    {this.state.connected === false ? (
-                      ""
-                    ) : (
-                      <Button
-                        primary
-                        disabled={!this.state.connected}
-                        onClick={this.handleMeetClient}
-                      >
-                        Đến nơi
-                      </Button>
-                    )}
-
-                    {this.state.connected === false ? (
-                      ""
-                    ) : (
-                      <Button secondary onClick={this.handleCancelBooking} disabled={this.state.bookingId !== undefined}>
-                        Hủy cuốc xe
-                      </Button>
-                    )}
-                    <Button disabled={this.state.bookingId !== undefined}>Bỏ qua</Button>
-                  </Grid.Row>
-                </Grid.Column>
-              </Grid>
-            </Form>
-          </Container>
-        </div>
-      </>
-    );
-  }
+                  {bookingId !== '' && connected === true && canCancel ? (
+                    <Button
+                      primary
+                      onClick={handleMeetClient}
+                    >
+                      Đến nơi
+                    </Button>
+                  ) : ''}
+                  {bookingId !== '' && connected === true && canCancel ? (
+                    <Button
+                      secondary
+                      onClick={handleCancelBooking}
+                      disabled={bookingId !== ""}
+                    >
+                      Hủy cuốc xe
+                    </Button>
+                  ) : '' }
+                </Grid.Row>
+              </Grid.Column>
+            </Grid>
+          </Form>
+        </Container>
+      </div>
+    </>
+  );
 }
 
 export default Driver;

@@ -46,8 +46,11 @@ app.use(function (req, res, next) {
 var MongoClient = require("mongodb").MongoClient;
 var url = "mongodb://localhost:27017/";
 var CLIENTS = [];
+var CLIENTSArray = [];
 var DRIVERS = [];
+var DRIVERSArray = [];
 var ADMINS = [];
+var ADMINSArray = [];
 var id;
 app.ws("/websocket", function (ws, req) {
   ws.on("connection", (ws) => {
@@ -61,31 +64,32 @@ app.ws("/websocket", function (ws, req) {
     console.log("Receive message:" + JSON.stringify(parsedMessage));
     if (parsedMessage.messageType === "REGISTER") {
       processRegisterMessage(parsedMessage, ws);
+      
     } else if (parsedMessage.messageType === "BOOKING") {
       //connection.send(`{"messageType": "BOOKING", "application":"CLIENT", "userId":${this.state.userId}}`);
-      if (ADMINS?.length > 0) {
-        ADMINS.forEach((admin) => {
+      if (ADMINSArray.length > 0) {
+        ADMINSArray.forEach((id) => {
           console.log("Forward message to admin dashboard");
-          admin.send(msg, admin);
+          ADMINS[id].send(msg, ADMINS[id]);
         });
       }
     } else if (parsedMessage.messageType === "BOOKING_ALERT") {
       // Logic here, just send alert to drivers in distance
-      if (DRIVERS?.length > 0) {
-        const distance = parsedMessage.distance;
+      if (DRIVERSArray.length > 0) {
         // get location data of all drives and calculate distance.
         // https://github.com/TijsM/distance-between-coordinates#readme
         MongoClient.connect(url, function (err, db) {
           if (err) throw err;
           var dbo = db.db("datxe_db");
-          var cursor = dbo.collection("user-locations").find({ userId: { $ne: parsedMessage.clientId } });
+          var locations = dbo.collection("user-locations").find({ userId: { $ne: parsedMessage.clientId } });
           
-          cursor.forEach((location) => {
+          locations.forEach((location) => {
             var driver = DRIVERS["DRIVER-" + location.userId];
             if (driver) {
+              console.log("get all drivers in db");
               if (location.lat !== undefined && location.lng !== undefined) {
                 let value  = getDistanceBetweenTwoPoints({lat: location.lat, lon: location.lng}, {lat: parsedMessage.lat, lon: parsedMessage.lng}, 'km');
-                console.log(value);
+                console.log('distance: ' + value + ' km');
                 console.log("send alert to");
                 if (value <= parsedMessage.distance) {
                   console.log("Forward message to drivers " + "DRIVER-" + location.userId + ", address:" + location.address);
@@ -106,19 +110,19 @@ app.ws("/websocket", function (ws, req) {
       //   "driverName": "${this.state.name}",
       //   "driverPhoneNumber": "${this.state.phoneNumber}"
       //   }
-      if (ADMINS.length > 0) {
-        ADMINS.forEach((admin) => {
+      if (ADMINSArray.length > 0) {
+        ADMINSArray.forEach((id) => {
           console.log("Forward accept message from driver to admin dashboard");
-          admin.send(msg, admin);
+          ADMINS[id].send(msg, ADMINS[id]);
         });
       }
     } else if (parsedMessage.messageType === "CONFIRM_BOOKING_ACCEPT") {
       console.log("Admin connect request send message to client and driver");
-      if (DRIVERS.length > 0) {
+      if (DRIVERSArray.length > 0) {
         let id = "DRIVER-" + parsedMessage.driverId;
         DRIVERS[id].send(msg, DRIVERS[id]);
       }
-      if (CLIENTS.length > 0) {
+      if (CLIENTSArray.length > 0) {
         let id = "CLIENT-" + parsedMessage.clientId;
         CLIENTS[id].send(msg, CLIENTS[id]);
         // TODO Store booking with client and driver
@@ -136,42 +140,42 @@ app.ws("/websocket", function (ws, req) {
       if (parsedMessage.application === 'DRIVER') {
         // Driver cancel booking:
         // - Notify for user
-        if (CLIENTS.length > 0) {
+        if (CLIENTSArray.length > 0) {
           let id = "CLIENT-" + parsedMessage.clientId;
-          CLIENTS[id]?.send(msg, CLIENTS[id]);
+          CLIENTS[id].send(msg, CLIENTS[id]);
         }
         // - Find another driver for user
-        if (ADMINS.length > 0) {
+        if (ADMINSArray.length > 0) {
           // let id = "ADMIN" + "-" + parsedMessage.clientId;
-          ADMINS.forEach((admin) => {
+          ADMINSArray.forEach((id) => {
             console.log("Forward canceled booking message to admin dashboard");
-            admin.send(msg, admin);
+            ADMINS[id].send(msg, ADMINS[id]);
           });
         }
       }
       if (parsedMessage.application === 'CLIENT') {
         // Client cancel booking:
         // - Notify for driver
-        if (DRIVERS.length > 0) {
+        if (DRIVERSArray.length > 0) {
           let id = "DRIVER-" + parsedMessage.driverId;
-          DRIVERS[id]?.send(msg, DRIVERS[id]);
+          DRIVERS[id].send(msg, DRIVERS[id]);
         }
-        if (ADMINS.length > 0) {
+        if (ADMINSArray.length > 0) {
           // let id = "ADMIN" + "-" + parsedMessage.clientId;
-          ADMINS.forEach((admin) => {
+          ADMINSArray.forEach((id) => {
             console.log("Forward canceled booking message to admin dashboard");
-            admin.send(msg, admin);
+            ADMINS[id].send(msg, ADMINS[id]);
           });
         }
       }
     } else if (parsedMessage.messageType === 'MEET_CLIENT') {
-      if (ADMINS.length > 0) {
-        ADMINS.forEach((admin) => {
+      if (ADMINSArray.length > 0) {
+        ADMINSArray.forEach((id) => {
           console.log("Forward message from driver to admin dashboard");
-          admin.send(msg, admin);
+          ADMINS[id].send(msg, ADMINS[id]);
         });
       }
-      if (CLIENTS.length > 0) {
+      if (CLIENTSArray.length > 0) {
         let id = "CLIENT-" + parsedMessage.clientId;
         CLIENTS[id].send(msg, CLIENTS[id]);
       }
@@ -183,26 +187,26 @@ function processRegisterMessage(parsedMessage, ws) {
   id = parsedMessage.application + "-" + parsedMessage.userId;
   console.log(id);
   if (parsedMessage.application === "ADMIN") {
-    if (ADMINS[id] === null || ADMINS[id] === undefined) {
+    if (ADMINSArray[id] === null || ADMINSArray[id] === undefined) {
       ADMINS[id] = ws;
-      ADMINS.push(ws);
+      ADMINSArray.push(id);
     }
   } else if (parsedMessage.application === "DRIVER") {
-    if (DRIVERS[id] === null || DRIVERS[id] === undefined) {
+    if (DRIVERSArray[id] === null || DRIVERSArray[id] === undefined) {
       DRIVERS[id] = ws;
-      DRIVERS.push(ws);
+      DRIVERSArray.push(id);
     }
   } else if (parsedMessage.application === "CLIENT") {
-    if (CLIENTS[id] === null || CLIENTS[id] === undefined) {
+    if (CLIENTSArray[id] === null || CLIENTSArray[id] === undefined) {
       CLIENTS[id] = ws;
-      CLIENTS.push(ws);
+      CLIENTSArray.push(id);
     }
   } else {
     ws.send("ERROR");
   }
-  console.log("ADMINS.length:" + ADMINS.length);
-  console.log("DRIVERS.length:" + DRIVERS.length);
-  console.log("CLIENTS.length:" + CLIENTS.length);
+  console.log("ADMINSArray.length:" + ADMINSArray.length);
+  console.log("DRIVERSArray.length:" + DRIVERSArray.length);
+  console.log("CLIENTSArray.length:" + CLIENTSArray.length);
 }
 
 // setInterval(() => {
