@@ -133,19 +133,19 @@ class Driver extends React.Component {
       // }, 5000);
     }
     //var ref = this;
-    // this.updateLocationOfUser(ref);
+    this.updateLocationOfUser(ref);
   }
 
   updateLocationOfUser(ref) {
     console.log('interval send location of driver to server');
     // IT works
     // Call google api to get long and lat of current address and update to user location table
-    // Geocode.fromAddress(ref.state.address).then(
-    //   (response) => {
-    //     const { lat, lng } = response.results[0].geometry.location;
-    //     console.log(lat, lng);
-    //     ref.state.lng = lng;
-    //     ref.state.lat = lat;
+    Geocode.fromAddress(ref.state.address).then(
+      (response) => {
+        const { lat, lng } = response.results[0].geometry.location;
+        console.log(lat, lng);
+        ref.state.lng = lng;
+        ref.state.lat = lat;
 
         fetch("http://localhost:8080/users/location", {
           method: "PUT",
@@ -167,11 +167,11 @@ class Driver extends React.Component {
           .catch((err) => {
             console.log(err);
           });
-    //   },
-    //   (error) => {
-    //     console.error(error);
-    //   }
-    // );
+      },
+      (error) => {
+        console.error(error);
+      }
+    );
   }
 
   componentWillUnmount() {
@@ -333,7 +333,7 @@ class Driver extends React.Component {
                     <Button
                       type="submit"
                       primary
-                      disabled={this.state.connected}
+                      disabled={this.state.bookingId !== undefined}
                       onClick={this.handleSubmit}
                     >
                       Nhận cuốc xe
@@ -354,11 +354,11 @@ class Driver extends React.Component {
                     {this.state.connected === false ? (
                       ""
                     ) : (
-                      <Button secondary onClick={this.handleCancelBooking}>
+                      <Button secondary onClick={this.handleCancelBooking} disabled={this.state.bookingId !== undefined}>
                         Hủy cuốc xe
                       </Button>
                     )}
-                    <Button disabled={this.state.connected}>Bỏ qua</Button>
+                    <Button disabled={this.state.bookingId !== undefined}>Bỏ qua</Button>
                   </Grid.Row>
                 </Grid.Column>
               </Grid>

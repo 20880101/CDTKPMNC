@@ -50,31 +50,105 @@ router.get("/initDataLocation", async function (req, res) {
   // data the conserves our API quota for development
   try {
     var userLocations = [
-      { userId: "1", name: "Nguyen Thi Thuy Trang 1", address: "1, Lê Duẩn, Quận 1, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "2", name: "Nguyen Thi Thuy Trang 2", address: "2, Xô Viết Nghệ Tĩnh, Bình Thạnh, Hồ Chí Minh",lng: undefined, lat: undefined },
-      { userId: "3", name: "Nguyen Thi Thuy Trang 3", address: "3, Cộng Hòa, Quận Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined},
+      {
+        userId: "1",
+        name: "Nguyen Thi Thuy Trang 1",
+        address: "1, Lê Duẩn, Quận 1, Hồ Chí Minh",
+        lng: undefined,
+        lat: undefined,
+      },
+      {
+        userId: "2",
+        name: "Nguyen Thi Thuy Trang 2",
+        address: "2, Xô Viết Nghệ Tĩnh, Bình Thạnh, Hồ Chí Minh",
+        lng: undefined,
+        lat: undefined,
+      },
+      {
+        userId: "3",
+        name: "Nguyen Thi Thuy Trang 3",
+        address: "3, Cộng Hòa, Quận Tân Bình, Hồ Chí Minh",
+        lng: undefined,
+        lat: undefined,
+      },
 
-      { userId: "11", address: "1, Trần Hưng Đạo, Quận 1, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "12", address: "2, Quang Trung, Gò Vấp, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "13", address: "3, Âu Cơ, Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "14", address: "4, Tô Ký, Quận 12, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "15", address: "5, Tam Bình, Quận Thủ Đức, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "16", address: "6, Lê Văn Việt, Quận 9, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "17", address: "7, Nam Kỳ Khởi Nghĩa, Quận 3, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "18", address: "8, Cách Mạng Tháng 8, Quận 10, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "19", address: "9, Lạc Long Quân, Quận 5, Hồ Chí Minh",lng: undefined, lat: undefined},
-      { userId: "20", address: "10, Trường Sơn, Quận Tân Bình, Hồ Chí Minh",lng: undefined, lat: undefined}
+      {
+        userId: "11",
+        address: "1, Trần Hưng Đạo, Quận 1, Hồ Chí Minh",
+        lng:
+        106.70404,
+        lat:
+        10.773045
+      },
+      {
+        userId: "12",
+        address: "2, Nam Kỳ Khởi Nghĩa, Quận 3, Hồ Chí Minh",
+        lng:
+        106.6870033,
+        lat:
+        10.7866596
+      },
+      {
+        userId: "13",
+        address: "3, Âu Cơ, Tân Bình, Hồ Chí Minh",
+        lng: 106.6398917,
+        lat: 10.7911121,
+      },
+      {
+        userId: "14",
+        address: "4, Tô Ký, Quận 12, Hồ Chí Minh",
+        lng: 106.6185,
+        lat: 10.85932,
+      },
+      {
+        userId: "15",
+        address: "5, Tam Bình, Quận Thủ Đức, Hồ Chí Minh",
+        lng: 106.7337841,
+        lat: 10.8676413,
+      },
+      {
+        userId: "16",
+        address: "6, Lê Văn Việt, Quận 9, Hồ Chí Minh",
+        lng: 106.7750689,
+        lat: 10.8484343,
+      },
+      {
+        userId: "17",
+        address: "7, Nam Kỳ Khởi Nghĩa, Quận 3, Hồ Chí Minh",
+        lng: 106.6862412,
+        lat: 10.7861386,
+      },
+      {
+        userId: "18",
+        address: "8, Cách Mạng Tháng 8, Quận 10, Hồ Chí Minh",
+        lng: 106.6773282,
+        lat: 10.7765963,
+      },
+      {
+        userId: "19",
+        address: "9, Lạc Long Quân, Quận 5, Hồ Chí Minh",
+        lng: 106.6633746,
+        lat: 10.7540279,
+      },
+      {
+        userId: "20",
+        address: "10, Trường Sơn, Quận Tân Bình, Hồ Chí Minh",
+        lng: 106.664809,
+        lat: 10.8075352,
+      },
     ];
     MongoClient.connect(url, function (err, db) {
       if (err) throw err;
       var dbo = db.db("datxe_db");
-      dbo.collection("user-locations").insertMany(userLocations, function (err, out) {
-        if (err) throw err;
-        console.log("documents inserted");
-        db.close();
-        console.log(out);
-        res.json({ ...userLocations });
-      });
+      dbo
+        .collection("user-locations")
+        .insertMany(userLocations, function (err, out) {
+          if (err) throw err;
+          console.log("documents inserted");
+          db.close();
+          console.log(out);
+          res.json({ ...userLocations });
+        });
     });
   } catch (e) {
     console.log(e);

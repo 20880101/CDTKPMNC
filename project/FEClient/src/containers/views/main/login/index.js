@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const Login = () => {
   const navigate = useNavigate();
 
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState("1");
   const [phoneNumber, setPhoneNumber] = useState("123456789");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("123456");
@@ -41,6 +41,9 @@ const Login = () => {
           localStorage.setItem("phoneNumber", response.phoneNumber);
           localStorage.setItem("role", response.role);
           localStorage.setItem("activated", response.activated);
+
+          setUserId(response.userId);
+
           navigate("/user");
         } else {
           setError(response.error);

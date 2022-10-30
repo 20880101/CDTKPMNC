@@ -199,6 +199,13 @@ class AdminDashboard extends React.Component {
         parsedMessage.messageType === "BOOKING_CANCELED" &&
         parsedMessage.application === "DRIVER") {
         this.state.setState({ bookingCancelledByDriver: true });
+        let newList = [];
+        this.state.drivers.forEach((driver) => {
+          if (driver.driverId !== parsedMessage.driverId) {
+            newList.push(driver);
+          }
+        })
+        this.handleDriversChange(newList);
       } else if (parsedMessage.messageType === 'MEET_CLIENT') {
         this.setState({ meetDriver: true });
       }
