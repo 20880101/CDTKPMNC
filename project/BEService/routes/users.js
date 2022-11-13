@@ -338,7 +338,7 @@ router.post("/login", async function (req, res) {
               id: result._id
             });
           } else {
-            res.json({error:'Không tìn thấy người dùng'});
+            res.json({error:'Không tìm thấy người dùng'});
           }
           db.close();
         });

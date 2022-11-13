@@ -31,7 +31,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // simple route
 app.get("/", (req, res, next) => {
   console.log("get route", req.url);
-  res.json({ message: "Wellcom" });
+  res.json({ message: "Welcome" });
   res.end();
 });
 
@@ -92,8 +92,10 @@ app.ws("/websocket", function (ws, req) {
                 console.log('distance: ' + value + ' km');
                 console.log("send alert to");
                 if (value <= parsedMessage.distance) {
+                  var msg1 = parsedMessage;
+                  msg1.distanceToUser = value.toFixed(2);;
                   console.log("Forward message to drivers " + "DRIVER-" + location.userId + ", address:" + location.address);
-                  driver.send(msg, driver);
+                  driver.send(JSON.stringify(msg1), driver);
                 }
               }
             }
