@@ -11,9 +11,10 @@ import {
 } from "semantic-ui-react";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
+Geocode.setApiKey("AIzaSyAgz67Cbm_ZoBesm7sOeTUV7Q-30HjtAY8");
 // AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk
 // AIzaSyC7itkRW-zOLxIF-Mhgmzn1iv35oiplrt8
+// AIzaSyAgz67Cbm_ZoBesm7sOeTUV7Q-30HjtAY8
 
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
@@ -49,6 +50,7 @@ function Driver() {
 
   const [connected, setConnected] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [distanceToUser, setDistanceToUser] = useState("");
   const [role] = useState(localStorage.getItem("role"));
   const [canCancel, setCanCancel] = useState(false);
   const [waitForConfirm, setWaitForConfirm] = useState(false);
@@ -100,6 +102,7 @@ function Driver() {
         setClientPhoneNumber(parsedMessage.phoneNumber);
         setClientAddress(parsedMessage.address);
         setIsBusy(true);
+        setDistanceToUser(parsedMessage.distanceToUser);
         console.log(parsedMessage.clientId);
         fetch(
           `http://localhost:8080/users/detail?userId=${parsedMessage.clientId}`,
@@ -216,14 +219,15 @@ function Driver() {
   }
 
   function handleSubmit(event) {
-    connection.send(`{
+     connection.send(`{
       "messageType": "BOOKING_ACCEPT", 
       "application": "DRIVER", 
       "clientId": "${clientId}", 
       "bookingId": "${bookingId}",
       "driverId": "${userId}",
       "driverName": "${name}",
-      "driverPhoneNumber": "${phoneNumber}"
+      "driverPhoneNumber": "${phoneNumber}",
+      "distanceToUser": "${distanceToUser}"
       }`);
       setCanCancel(true);
       setWaitForConfirm(true);
@@ -306,6 +310,14 @@ function Driver() {
                         <Grid.Column align="left">
                           <label>Địa điểm đón: </label>
                           <label>{clientAddress}</label>
+                        </Grid.Column>
+                      </Form.Field>
+                    </Grid.Row>
+                    <Grid.Row style={{ padding: "10px 10px 10px 10px" }}>
+                      <Form.Field>
+                        <Grid.Column align="left">
+                          <label>Khoảng cách: </label>
+                          <label>{distanceToUser} km</label>
                         </Grid.Column>
                       </Form.Field>
                     </Grid.Row>

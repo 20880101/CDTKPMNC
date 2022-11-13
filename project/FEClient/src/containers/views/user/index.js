@@ -10,7 +10,7 @@ import {
 } from "semantic-ui-react";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
+Geocode.setApiKey("AIzaSyAgz67Cbm_ZoBesm7sOeTUV7Q-30HjtAY8");
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
 // set response region. Its optional.

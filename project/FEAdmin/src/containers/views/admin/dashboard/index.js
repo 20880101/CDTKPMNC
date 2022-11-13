@@ -11,7 +11,7 @@ import {
 import DataTable from "react-data-table-component";
 
 // https://www.npmjs.com/package/react-geocode
-Geocode.setApiKey("AIzaSyCRwKDRudmnflj_-cxiDgY3amDog-W8zmk");
+Geocode.setApiKey("AIzaSyAgz67Cbm_ZoBesm7sOeTUV7Q-30HjtAY8");
 // set response language. Defaults to english.
 Geocode.setLanguage("vi");
 // set response region. Its optional.
@@ -65,6 +65,10 @@ const driverTableColumns = [
   {
     name: "Tên tài xế",
     selector: (row) => row.driverName,
+  },
+  {
+    name: "Khoảng cách (km)",
+    selector: (row) => row.distanceToUser,
   },
   {
     name: "Điều xe",
@@ -193,8 +197,10 @@ class AdminDashboard extends React.Component {
         console.log(parsedMessage.messageType);
         this.handleBookingMessage(parsedMessage);
         this.loadDataOfUser(parsedMessage.phoneNumber);
+
       } else if (parsedMessage.messageType === "BOOKING_ACCEPT") {
         this.handleBookingAccept(parsedMessage);
+
       } else if (
         parsedMessage.messageType === "BOOKING_CANCELED" &&
         parsedMessage.application === "DRIVER") {
@@ -206,6 +212,7 @@ class AdminDashboard extends React.Component {
           }
         })
         this.handleDriversChange(newList);
+
       } else if (parsedMessage.messageType === 'MEET_CLIENT') {
         this.setState({ meetDriver: true });
       }
@@ -336,6 +343,7 @@ class AdminDashboard extends React.Component {
       driverId: parsedMessage.driverId,
       driverName: parsedMessage.driverName,
       driverPhoneNumber: parsedMessage.driverPhoneNumber,
+      distanceToUser: parsedMessage.distanceToUser
     };
     let newList = [...this.state.drivers];
     let foundDriver = false;
