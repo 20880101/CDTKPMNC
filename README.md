@@ -21,7 +21,7 @@ Listening on port 4000, http://localhost:4000
 # Init user to db:
 Call this get request on browser: http://localhost:8080/users/initData
 
-# Init user to db:
+# Init location to DB:
 Call this get request on browser: http://localhost:8080/users/initDataLocation
 
 # Filter data in mongodb:
